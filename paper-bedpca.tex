@@ -1,0 +1,215 @@
+%% LyX 1.3 created this file.  For more info, see http://www.lyx.org/.
+%% Do not edit unless you really know what you are doing.
+\documentclass[english, 12pt]{article}
+\usepackage{times}
+%\usepackage{algorithm2e}
+\usepackage{url}
+\usepackage{bbm}
+\usepackage[T1]{fontenc}
+\usepackage[latin1]{inputenc}
+\usepackage{geometry}
+\geometry{verbose,letterpaper,tmargin=2cm,bmargin=2cm,lmargin=2cm,rmargin=2cm}
+\usepackage{rotating}
+\usepackage{color}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{amsmath, amsthm, amssymb}
+\usepackage{setspace}
+\usepackage{lineno}
+\usepackage{hyperref}
+\usepackage{bbm}
+
+
+%\usepackage{xr}
+%\externaldocument{SCT-supp}
+
+%\linenumbers
+%\doublespacing
+\onehalfspacing
+%\usepackage[authoryear]{natbib}
+\usepackage{natbib} \bibpunct{(}{)}{;}{author-year}{}{,}
+
+%Pour les rajouts
+\usepackage{color}
+\definecolor{trustcolor}{rgb}{0,0,1}
+
+\usepackage{dsfont}
+\usepackage[warn]{textcomp}
+\usepackage{adjustbox}
+\usepackage{multirow}
+\usepackage{graphicx}
+\graphicspath{{../figures/}}
+\DeclareMathOperator*{\argmin}{\arg\!\min}
+
+\let\tabbeg\tabular
+\let\tabend\endtabular
+\renewenvironment{tabular}{\begin{adjustbox}{max width=0.9\textwidth}\tabbeg}{\tabend\end{adjustbox}}
+
+\makeatletter
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LyX specific LaTeX commands.
+%% Bold symbol macro for standard LaTeX users
+%\newcommand{\boldsymbol}[1]{\mbox{\boldmath $#1$}}
+
+%% Because html converters don't know tabularnewline
+\providecommand{\tabularnewline}{\\}
+
+\usepackage{babel}
+\makeatother
+
+
+\begin{document}
+
+
+\title{Principal Component Analysis of Population Genetic Data}
+\author{Florian Priv\'e,$^{\text{1,2,}*}$ Michael G.B. Blum,$^{\text{1,}*}$ and Bjarni J. Vilhj\'almsson$^{\text{2}}$}
+
+
+
+\date{~ }
+\maketitle
+
+\noindent$^{\text{\sf 1}}$Laboratoire TIMC-IMAG, UMR 5525, Univ.\ Grenoble Alpes, CNRS, La Tronche, France, \\
+\noindent$^{\text{\sf 2}}$National Centre for Register-based Research (NCRR), Aarhus University, Denmark. \\
+
+\noindent$^\ast$To whom correspondence should be addressed.\\
+
+\noindent Contacts:
+\begin{itemize}
+\item \url{florian.prive.21@gmail.com}
+\item \url{michael.blum@univ-grenoble-alpes.fr}
+\item \url{bjv@econ.au.dk}
+\end{itemize}
+
+\newpage
+
+\abstract{
+
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newpage
+
+\section{Introduction}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Material and Methods}
+
+\subsection{PCA with missing values}
+
+When there is no missing value, we compute the partial Singular Value Decomposition (SVD) $U \Delta V^T$ of the scaled genotype matrix $\tilde{G}_{i,j} = \frac{G_{i,j} - 2 f_j}{\sqrt{2 f_j (1 - f_j)}}$ where $G_{i,j}$ is the allele count (genotype) of individual $i$ and variant $j$, and $f_j$ is the allele frequency of variant $j$ ($2 f_j$ is the mean allele count of variant $j$). Then, $U \Delta$ are the first $K$ PC scores and $V$ are the first $K$ PC loadings, where $K$ is the number of PCs computed (e.g.\ $K=20$).
+
+When there is some missing values, we effectively compute the partial SVD of the following matrix: $\breve{G}_{i,j} = \frac{G_{i,j} - 2 f_j}{\sqrt{2 f_j (1 - f_j) ~ p_i^{(1)} p_j^{(2)}}}$, where missing values are replaced by the mean (i.e.\ $G_{i,j} - 2 f_j = 0$ if $G_{i,j}$ is missing) and where the proportion of missing values of individual $i$, $p_i^{(1)}$, and variant $j$, $p_j^{(2)}$, are accounting for the shrinkage due to mean imputation [REWORD?].
+Note that this decomposition is equivalent to the decomposition presented above when there is no missing value.
+
+\subsection{Projecting PCs of the 1000 Genomes}
+
+We provide a subsetted version of the 1000 genomes (1000G) project data \cite[]{10002015global,meyer2019genotype}.
+Variants are restricted to the ones in common with HapMap3 and UK Biobank \cite[]{international2010integrating,bycroft2017genome}. 
+Moreover, we apply some quality control filters; we remove variants having a minor allele frequency < 0.01, variants or individuals with more than 10\% missing value, variants with P-value of the Hardy-Weinberg exact test < $10^{-50}$, and non-autosomal variants. 
+To remove related individuals with first-degree relationship or more, we apply KING cutoff of 0.177 to the data \cite[]{manichaikul2010robust,chang2015second}.
+This results in 2493 individuals of the 1000G project (phase 3) in PLINK bed/bim/fam format. 
+Resulting PLINK files and R code to generate these files are available at \url{https://doi.org/10.6084/m9.figshare.9208979.v2}. 
+To easily download these data, we provide a function called \texttt{download\_1000G} in R package bigsnpr.
+
+There are [X] steps to project PCs of a reference dataset (e.g.\ 1000G) to a target genotype data:
+\begin{enumerate}
+\item matching the variants of each dataset, including removing ambiguous alleles [A/T] and [C/G], and matching strand and direction of the alleles;
+\item computing PCA of the reference dataset using the matched variants only;
+\item projecting computed PCs to the target data;
+\item possibly adjusting projected PCs for shrinkage;
+\item[5.] [ANYTHING ELSE?].
+\end{enumerate}
+We implement these steps in function \texttt{bed\_projectPCA} of package bigsnpr.
+
+For step 4, we implement the shrinkage-bias adjustment proposed by \cite{dey2019asymptotic}.
+This requires computing all eigenvalues of the reference dataset, which is relatively fast to compute for the 2493 individuals of the 1000G. However, it can be computionally expensive if the reference data used includes many more individuals [BETWEEN O($N^2$) AND O($N^3$); MENTION IT?].
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Results}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Discussion}
+
+
+
+
+\subsection{Conclusion}
+
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\newpage
+
+\section*{Funding}
+
+\section*{Acknowledgements}
+
+This research has been conducted using the UK Biobank Resource under Application Number 25589.
+
+~\\ \textit{Conflict of Interest:} none declared.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\newpage
+
+\bibliographystyle{natbib}
+\bibliography{refs}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newpage
+\section*{Supplementary Materials}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\clearpage
+
+\vspace*{1em}
+
+\begin{figure}[!htpb]
+%\centerline{\includegraphics[width=0.8\textwidth]{AUC-simu2.pdf}}
+\caption{}
+\label{fig:AUC-simu2}
+\end{figure}
+
+
+\vspace*{1em}
+
+% latex table generated in R 3.5.2 by xtable 1.8-4 package
+% Wed Jun 19 15:19:38 2019
+\begin{table}[!htpb]
+\caption{AUC values on the test set for simulations with less well imputed variants (mean [95\% CI] from $10^4$ bootstrap samples). These results are plotted in figure \ref{fig:AUC-simu2}.\label{tab:AUC-simu2}}
+\vspace*{0.5em}
+\centering
+\begin{tabular}{|l|c|c|c|c|}
+\hline
+Scenario & stdCT & maxCT & SCT & lassosum \\ 
+\hline
+100  & 77.4 [76.0-78.8] & 83.9 [83.4-84.4] & 83.1 [82.6-83.6] & 80.1 [79.5-80.8] \\ 
+10K  & 69.4 [68.4-70.5] & 73.0 [72.5-73.4] & 72.9 [72.5-73.3] & 71.2 [70.6-71.7] \\ 
+1M   & 64.0 [63.6-64.4] & 64.0 [63.6-64.4] & 62.7 [62.3-63.0] & 64.1 [63.3-64.8] \\ 
+2chr & 70.0 [68.8-71.2] & 74.4 [73.6-75.2] & 78.5 [77.9-79.1] & 73.2 [72.5-73.8] \\ 
+err  & 67.0 [66.0-68.1] & 68.6 [67.7-69.5] & 69.5 [68.9-70.1] & 65.6 [64.9-66.3] \\ 
+HLA  & 74.8 [72.9-76.3] & 75.3 [73.5-76.9] & 76.4 [74.5-78.0] & 75.8 [74.2-77.2] \\ 
+\hline
+\end{tabular}
+\end{table}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\end{document}
