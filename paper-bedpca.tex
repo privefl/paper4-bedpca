@@ -62,7 +62,7 @@
 
 
 \title{Principal Component Analysis of Population Genetic Data}
-\author{Florian Priv\'e,$^{\text{1,2,}*}$ Michael G.B. Blum,$^{\text{1,}*}$ and Bjarni J. Vilhj\'almsson$^{\text{2}}$}
+\author{Florian Priv\'e,$^{\text{1,2,}*}$ Keurcien Luu, Clara Albi\~nana Climent,$^{\text{2}}$ Michael G.B. Blum,$^{\text{1,}*}$ and Bjarni J. Vilhj\'almsson$^{\text{2}}$}
 
 
 
@@ -77,6 +77,8 @@
 \noindent Contacts:
 \begin{itemize}
 \item \url{florian.prive.21@gmail.com}
+\item \url{keurcien.luu@gmail.com}
+\item \url{clara@econ.au.dk}
 \item \url{michael.blum@univ-grenoble-alpes.fr}
 \item \url{bjv@econ.au.dk}
 \end{itemize}
@@ -93,6 +95,15 @@
 \newpage
 
 \section{Introduction}
+
+Principal Component Analysis (PCA) has been widely used in genetics has been used for many years and in many contexts such as e.g.\ to adjust for population structure in Genome-Wide Association Studies (GWAS) by adding PCs as covariates \cite[]{price2006principal} and to detect loci under selection based on PCA \cite[]{galinsky2016fast,luu2017pcadapt}.
+Much work has been devoted to developing scalable algorithms to compute PCA on data as large as the UK Biobank \cite[]{bycroft2017genome}, which is now possible thanks to software such as FastPCA (fast mode), FlashPCA2, PLINK 2.0 (approx mode), bigstatsr/bigsnpr and TeraPCA \cite[]{galinsky2016fast,abraham2017flashpca2,chang2015second,prive2017efficient,bose2019terapca}.
+
+However, some pitfalls related to PCA of genotype data has been documented and we recall them here. This includes some possible lack of precision of computed PCs of software such as FastPCA and PLINK 2.0, which is not an issue for FlashPCA2 and bigstatsr/bigsnpr \cite[]{abraham2017flashpca2,prive2017efficient}.
+This also includes capturing Linkage Disequilibrium (LD) structure in PCA instead of population structure only \cite[]{price2008long,abdellaoui2013population,prive2017efficient}. This leads to e.g.\ an over-correction of GWAS variants within long-range LD regions [REWORD/PRECISE].
+Finally, another issue may arise when projecting PCs of a reference dataset to another study dataset: projected PCs are shrunk towards 0 in the new dataset \cite[]{lee2010convergence,wang2015improved,zhang2019fast}. This shrinkage makes it dangerous to use the projected PCs for analysis such as PC regression, ancestry detection and GWAS [REWORD/PRECISE].
+
+In this paper, we derive a new implementation of PCA that can be used directly on bed/bim/fam PLINK files with some missing values, which is available in R package bigsnpr v1.0.0. Then, we recall some of the pitfalls of PCA computation on genotype data and provide efficient solutions to these issues, such as accouting for LD structure in PCA, detecting outliers [NOT INTRODUCED BEFORE] and projecting PCs to another study sample without shrinkage bias.
 
 
 
