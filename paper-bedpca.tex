@@ -113,10 +113,10 @@ In this paper, we derive a new implementation of PCA that can be used directly o
 
 \subsection{PCA with missing values}
 
-When there is no missing value, we compute the partial Singular Value Decomposition (SVD) $U \Delta V^T$ of the scaled genotype matrix $\tilde{G}_{i,j} = \frac{G_{i,j} - 2 f_j}{\sqrt{2 f_j (1 - f_j)}}$ where $G_{i,j}$ is the allele count (genotype) of individual $i$ and variant $j$, and $f_j$ is the allele frequency of variant $j$ ($2 f_j$ is the mean allele count of variant $j$). Then, $U \Delta$ are the first $K$ PC scores and $V$ are the first $K$ PC loadings, where $K$ is the number of PCs computed (e.g.\ $K=20$).
+When there is no missing value, we compute the partial Singular Value Decomposition (SVD) $U \Delta V^T$ of the scaled genotype matrix $\tilde{G}_{i,j} = \frac{G_{i,j} - 2 \hat{f_j}}{\sqrt{2 \hat{f_j} (1 - \hat{f_j})}}$ where $G_{i,j}$ is the allele count (genotype) of individual $i$ and variant $j$, and $\hat{f_j}$ is the estimated allele frequency of variant $j$ ($2 \hat{f_j}$ is the mean allele count of variant $j$). Then, $U \Delta$ are the first $K$ PC scores and $V$ are the first $K$ PC loadings, where $K$ is the number of PCs computed (e.g.\ $K=20$).
 
-When there is some missing values, we effectively compute the partial SVD of the following matrix: $\breve{G}_{i,j} = \frac{G_{i,j} - 2 f_j}{\sqrt{2 f_j (1 - f_j) ~ p_i^{(1)} p_j^{(2)}}}$ [VERIFY THAT THIS IS CENTERED], where missing values are replaced by the mean (i.e.\ $G_{i,j} - 2 f_j = 0$ if $G_{i,j}$ is missing) and where the proportion of missing values of individual $i$, $p_i^{(1)}$, and variant $j$, $p_j^{(2)}$, are accounting for the shrinkage due to mean imputation [REWORD?].
-Note that this decomposition is equivalent to the decomposition presented above when there is no missing value.
+When there is some missing values, we compute the partial SVD similarly, except that missing values are replaced by the variant means (i.e.\ $G_{i,j} - 2 \hat{f_j} = 0$ when $G_{i,j}$ is missing) and  the $\hat{f_j}$ for each variant are estimated using only non missing values of each variant.
+Note that this decomposition is equivalent to the decomposition presented above after imputation by the variant means [SURE?].
 
 \subsection{Outlier detection in PCA}
 
@@ -130,7 +130,7 @@ For detecting samples that have a different ancestry from most of the samples in
 
 Finally, to choose the threshold of outlierness based on the previously described statistics, we use a modified version of Tukey's rule, a standard rule for detecting outliers \cite[]{tukey77}. 
 The standard upper limit defined by Tukey's rule is $q_{75\%}(x) + 1.5 \cdot IQR(x)$, where $x$ is the vector of computed statistics and $IQR(x) = q_{75\%}(x) - q_{25\%}(x)$ is the interquartile range.
-However, there are two pitfalls when using Tukey's rule. First, Tukey's rule assumes a normally distributed sample. For example, when the data is skewed, it does not work that well. We account for skewness using the medcouple \cite[]{hubert2008adjusted}. Standard Tukey's rule also uses a fixed coefficient (1.5) that does not account for multiple testing, which means that for large samples, you will almost always get some outliers if using 1.5. 
+However, there are two pitfalls when using Tukey's rule. First, Tukey's rule assumes a normally distributed sample. For example, when the data is skewed, it does not work that well. We account for skewness using the medcouple \cite[]{hubert2008adjusted}. Standard Tukey's rule also uses a fixed coefficient (1.5) that does not account for multiple testing, which means that for large samples, there are always some outliers detected when using 1.5. 
 To solve these two issues, we implement \texttt{tukey\_mc\_up} in R package bigutilsr and use it here, which accounts both for skewness and multiple testing by default.
 
 \subsection{Projecting PCs from a reference dataset}
@@ -138,7 +138,7 @@ To solve these two issues, we implement \texttt{tukey\_mc\_up} in R package bigu
 We provide a subsetted version of the 1000 genomes (1000G) project data \cite[]{10002015global,meyer2019genotype}.
 Variants are restricted to the ones in common with HapMap3 and UK Biobank \cite[]{international2010integrating,bycroft2017genome}. 
 Moreover, we apply some quality control filters; we remove variants having a minor allele frequency < 0.01, variants or individuals with more than 10\% missing value, variants with P-value of the Hardy-Weinberg exact test < $10^{-50}$, and non-autosomal variants. 
-To remove related individuals with first-degree relationship or more, we apply KING cutoff of 0.177 to the data \cite[]{manichaikul2010robust,chang2015second}.
+To remove related individuals with first-degree relationship or more, we apply KING cutoff of 0.177 [BE MORE STRINGENT?] to the data using PLINK 2.0 \cite[]{manichaikul2010robust,chang2015second}.
 This results in 2493 individuals of the 1000G project (phase 3) in PLINK bed/bim/fam format. 
 Resulting PLINK files and R code to generate these files are available at \url{https://doi.org/10.6084/m9.figshare.9208979.v2}. 
 To easily download these data, we provide a function called \texttt{download\_1000G} in R package bigsnpr.
@@ -152,7 +152,7 @@ There are 4 steps to project PCs of a reference dataset (e.g.\ 1000G) to a targe
 \end{enumerate}
 We implement these steps in function \texttt{bed\_projectPCA} of package bigsnpr.
 
-For step 4, we implement a shrinkage-bias adjustment method that combines the two methods proposed by \cite{zhang2019fast}. First, for only a subset of target individuals, we compute the Online Augmentation, Decomposition, and Procrustes (OADP) transformation (using $K''=K'=K$). For these individuals, we regress the new PC scores resulting from OADP by the projected PC scores without adjustement; this gives us shrinkage-adjustment factors that we use to correct projected PC scores for all target individuals.
+For step 4, we implement a shrinkage-bias adjustment method that combines the two methods proposed by \cite{zhang2019fast}. First, for only a subset of target individuals, we compute the Online Augmentation, Decomposition, and Procrustes (OADP) transformation (using $K''=K'=K$ [REMOVE?]). For these individuals, we regress the new PC scores resulting from OADP by the projected PC scores without adjustement; this gives us shrinkage-adjustment factors that we use to correct projected PC scores for all target individuals.
 
 %This requires computing all eigenvalues of the reference dataset, which is relatively fast to compute for the 2493 individuals of the 1000G. However, it can be computionally expensive if the reference data used includes many more individuals [BETWEEN O($N^2$) AND O($N^3$); MENTION IT?].
 
