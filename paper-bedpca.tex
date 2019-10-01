@@ -133,7 +133,7 @@ The standard upper limit defined by Tukey's rule is $q_{75\%}(x) + 1.5 \cdot IQR
 However, there are two pitfalls when using Tukey's rule. First, Tukey's rule assumes a normally distributed sample. For example, when the data is skewed, it does not work that well. We account for skewness using the medcouple \cite[]{hubert2008adjusted}. Standard Tukey's rule also uses a fixed coefficient (1.5) that does not account for multiple testing, which means that for large samples, there are always some outliers detected when using 1.5. 
 To solve these two issues, we implement \texttt{tukey\_mc\_up} in R package bigutilsr and use it here, which accounts both for skewness and multiple testing by default.
 
-\subsection{Projecting PCs from a reference dataset}
+\subsection{Subsetted version of 1000G data [RENAME?]}
 
 We provide a subsetted version of the 1000 genomes (1000G) project data \cite[]{10002015global,meyer2019genotype}.
 Variants are restricted to the ones in common with HapMap3 and UK Biobank \cite[]{international2010integrating,bycroft2017genome}. 
@@ -143,16 +143,17 @@ This results in 2490 individuals of the 1000G project (phase 3) in PLINK bed/bim
 Resulting PLINK files and R code to generate these files are available at \url{https://doi.org/10.6084/m9.figshare.9208979.v3}. 
 To easily download these data, we provide a function called \texttt{download\_1000G} in R package bigsnpr.
 
-There are 4 steps to project PCs of a reference dataset (e.g.\ 1000G) to a target genotype data:
+
+\subsection{Projecting PCs from a reference dataset}
+
+To project PCs of a reference dataset (e.g.\ 1000G) to a target genotype data, we implement the following 3 steps in function \texttt{bed\_projectPCA} of package bigsnpr:
 \begin{enumerate}
 \item matching the variants of each dataset, including removing ambiguous alleles [A/T] and [C/G], and matching strand and direction of the alleles;
 \item computing PCA of the reference dataset using the matched variants only;
-\item projecting computed PCs to the target data;
-\item adjusting projected PCs for shrinkage.
+\item projecting computed PCs to the target data using an optimised implementation of the Online Augmentation, Decomposition, and Procrustes (OADP) transformation \cite[]{zhang2019fast} described in Supplementary Materials.
 \end{enumerate}
-We implement these steps in function \texttt{bed\_projectPCA} of package bigsnpr.
 
-For step 4, we implement a shrinkage-bias adjustment method that combines the two methods proposed by \cite{zhang2019fast}. First, for only a subset of target individuals, we compute the Online Augmentation, Decomposition, and Procrustes (OADP) transformation (using $K''=K'=K$ [REMOVE?]). For these individuals, we regress the new PC scores resulting from OADP by the projected PC scores without adjustement; this gives us shrinkage-adjustment factors that we use to correct projected PC scores for all target individuals.
+%For step 4, we implement a shrinkage-bias adjustment method that combines the two methods proposed by \cite{zhang2019fast}. First, for only a subset of target individuals, we compute the Online Augmentation, Decomposition, and Procrustes (OADP) transformation (using $K''=K'=K$ [REMOVE?]). For these individuals, we regress the new PC scores resulting from OADP by the projected PC scores without adjustement; this gives us shrinkage-adjustment factors that we use to correct projected PC scores for all target individuals.
 
 %This requires computing all eigenvalues of the reference dataset, which is relatively fast to compute for the 2493 individuals of the 1000G. However, it can be computionally expensive if the reference data used includes many more individuals [BETWEEN O($N^2$) AND O($N^3$); MENTION IT?].
 
@@ -167,6 +168,8 @@ For step 4, we implement a shrinkage-bias adjustment method that combines the tw
 \section{Discussion}
 
 [LIMITATION: RUN MULTIPLE TIMES / FAIL TO SPEED UP]
+
+\noindent[DISCUSS ABOUT $K''=K'=K$? FASTER, EASIER, DO NOT WANT MORE DIM?]
 
 
 
@@ -199,7 +202,21 @@ This research has been conducted using the UK Biobank Resource under Application
 \newpage
 \section*{Supplementary Materials}
 
+\subsection*{Optimised OADP transformation}
 
+We implement an optimised version of the Online Augmentation, Decomposition, and Procrustes (OADP) transformation when using $K''=K'=K$ \cite[]{zhang2019fast}.
+We assume that the $K$-partial Singular Value Decomposition (SVD) of the reference matrix $X$ (of size $n \times p$) has been computed as $U \Delta V^T$. There are several steps to perform OADP transformation for each sample $y$ (of size $1 \times p$) of target matrix $Y$ (of size $m \times p$):
+\begin{enumerate}
+\item Calculate $l = y \cdot V$ (of size $1 \times K$), where $V$ are the K PC loadings. And $g = y \cdot h^T$ (of size $1 \times 1$), where $h = (y - l \cdot V^T) / ||y - l \cdot V^T||_2$. Actually, $||y - l \cdot V^T||_2^2 = y \cdot y^T - 2 \cdot y \cdot V \cdot l^T  + l \cdot V^T \cdot V \cdot l^T = y \cdot y^T - l \cdot l^T$ and $y \cdot (y - l \cdot V^T)^T = y \cdot y^T - y \cdot V \cdot l^T = y \cdot y^T - l \cdot l^T$. Then $g = \sqrt{y \cdot y^T - l \cdot l^T}$.
+\item Calculate $Q^T Q$ where $$Q = \begin{bmatrix} \Delta & l^T \\ 0 & g \end{bmatrix}$$ so that $$Q^TQ = \begin{bmatrix} \Delta^2 & \Delta \cdot l^T \\ l \cdot \Delta & g^2 + l \cdot l^T \end{bmatrix} = \begin{bmatrix} \Delta^2 & \Delta \cdot l^T \\ l \cdot \Delta & y \cdot y^T \end{bmatrix}.$$ Note that we do not actually need to compute $g$, and that we can update the last row and column of $Q^T Q$ instead of computing it from an updated version of $Q$.
+\item Get the eigen decomposition $Q^T Q = V' {\Delta'}^2 {V'}^T$ (truncated to $K$ components out of the $K+1$).
+\item Calculate $$\begin{bmatrix} \widetilde{U} \\ \widetilde{u}  \end{bmatrix} = \begin{bmatrix} U & 0 \\ 0 & 1 \end{bmatrix} V' = \begin{bmatrix} U V'[1{:}K,~] \\ V'[K{+}1,~] \end{bmatrix} $$
+\item Find the Procrustes transformation from $\widetilde{U}$ to $U$. As $\widetilde{U}$ and $U$ have both their columns centered already, the Procrustes transformation $\rho ~\widetilde{U} A$, where $\rho$ is a scaling coefficient and $A$ is an orthonomal projection matrix that minimise the Frobenius norm of $(\rho \widetilde{U} A - U)$, is given by $A = V'' {U''}^T$ and $\rho = \frac{\text{trace}(\Delta'')}{\text{trace}(\widetilde{U}^T \widetilde{U})}$ where $U'' \Delta'' {V''}^T$ is the full SVD of $U^T \widetilde{U} = V'[1{:}K,~]$ \cite[]{wang2015improved}. Then, $\rho = \frac{\text{trace}(\Delta'')}{\text{trace}(\widetilde{U}^T \widetilde{U})} = \frac{\text{trace}(\Delta'')}{\text{trace}({V'[1{:}K,~]}^T V'[1{:}K,~])} = \frac{\text{trace}(\Delta'')}{\text{trace}(\Delta''^2)}$. 
+\item Apply the previous transformation to $\widetilde{u}$ to get the projection of $y$ in the reference PCA space (i.e.\ $\rho \widetilde{u} A$),.
+\item Finally, multipy by $\Delta$.
+\end{enumerate}
+
+[CAN COMPUTE SVD OF $V'[1{:}K,~]$ FROM LOW-RANK UPDATE?]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
