@@ -122,9 +122,9 @@ Note that this decomposition is equivalent to the decomposition presented above 
 
 We propose [BOF] different outlier detection techniques for PCA.
 
-For detecting outlier variants in PCA that are due to long-range Linkage Disequilibrium (LD) regions, we use the same procedure as described by \cite{prive2017efficient}: we compute pcadapt statistics \cite[]{luu2017pcadapt} that summarises the contribution of each variant in all PC loadings. This captures both population-differentiating variants as well as long-range LD regions. We then smooth the statistics to mostly capture consecutive outliers that corresponds to long-range LD regions.
+For detecting outlier variants in PCA that are due to long-range Linkage Disequilibrium (LD) regions, we use the same procedure as described by \cite{prive2017efficient}: we compute pcadapt statistics \cite[]{luu2017pcadapt} that summarises the contribution of each variant in all PC loadings computed. This captures both population-differentiating variants as well as long-range LD regions. We then smooth the statistics [BE MORE PRECISE?] to mostly capture consecutive outliers that corresponds to long-range LD regions.
 
-For detecting outlier samples in PCA, we use the Local Outlier Factor (LOF) on PCs \cite[]{breunig2000lof}. To make it robust to the choice of the number of nearest neighbours (kNN) and to the number of PCs used, we take the maximum value of the statistic computed with kNN $\in$ \{4, 10, 30\} and varying the number of PCs from 2 to the number of available PCs. We make use of the fast K nearest neighbours implementation of R package nabor to implement the LOF statistic efficiently \cite[]{elseberg2012comparison}.
+For detecting outlier samples in PCA, we use the Local Outlier Factor (LOF) on PCs \cite[]{breunig2000lof}. To make it robust to the choice of the number of nearest neighbours (kNN), we take the maximum value of the statistic computed with kNN $\in$ \{4, 5, 6, 7, 8\}. We do not use larger values for `kNN' because it would remove small ancestry groups (e.g.\ composed of 10-15 people only). We make use of the fast K nearest neighbours implementation of R package nabor to implement the LOF statistic efficiently in our new R package bigutilsr \cite[]{elseberg2012comparison}.
  
 For detecting samples that have a different ancestry from most of the samples in the data, we compute the pairwise orthogonalized Gnanadesikan-Kettenrin robust Mahalanobis distance of PCs \cite[]{gnanadesikan1972robust,maronna2002robust}, and do not include individuals whose log-distance is larger than some threshold determined based on visual inspection [DO IT AUTOMATIC?].
 
@@ -138,9 +138,9 @@ To solve these two issues, we implement \texttt{tukey\_mc\_up} in R package bigu
 We provide a subsetted version of the 1000 genomes (1000G) project data \cite[]{10002015global,meyer2019genotype}.
 Variants are restricted to the ones in common with HapMap3 and UK Biobank \cite[]{international2010integrating,bycroft2017genome}. 
 Moreover, we apply some quality control filters; we remove variants having a minor allele frequency < 0.01, variants or individuals with more than 10\% missing value, variants with P-value of the Hardy-Weinberg exact test < $10^{-50}$, and non-autosomal variants. 
-To remove related individuals with first-degree relationship or more, we apply KING cutoff of 0.177 [BE MORE STRINGENT?] to the data using PLINK 2.0 \cite[]{manichaikul2010robust,chang2015second}.
-This results in 2493 individuals of the 1000G project (phase 3) in PLINK bed/bim/fam format. 
-Resulting PLINK files and R code to generate these files are available at \url{https://doi.org/10.6084/m9.figshare.9208979.v2}. 
+To remove related individuals with second-degree relationship or more, we apply KING cutoff of 0.0884 to the data using PLINK 2.0 \cite[]{manichaikul2010robust,chang2015second}.
+This results in 2490 individuals of the 1000G project (phase 3) in PLINK bed/bim/fam format. 
+Resulting PLINK files and R code to generate these files are available at \url{https://doi.org/10.6084/m9.figshare.9208979.v3}. 
 To easily download these data, we provide a function called \texttt{download\_1000G} in R package bigsnpr.
 
 There are 4 steps to project PCs of a reference dataset (e.g.\ 1000G) to a target genotype data:
