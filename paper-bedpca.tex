@@ -38,7 +38,7 @@
 \usepackage{adjustbox}
 \usepackage{multirow}
 \usepackage{graphicx}
-\graphicspath{{../figures/}}
+\graphicspath{{figures/}}
 \DeclareMathOperator*{\argmin}{\arg\!\min}
 
 \let\tabbeg\tabular
@@ -118,7 +118,7 @@ When there is no missing value, we compute the partial Singular Value Decomposit
 When there is some missing values, we compute the partial SVD similarly, except that missing values are replaced by the variant means (i.e.\ $G_{i,j} - 2 \hat{f_j} = 0$ when $G_{i,j}$ is missing) and  the $\hat{f_j}$ for each variant are estimated using only non missing values of each variant.
 Note that this decomposition is equivalent to the decomposition presented above after imputation by the variant means [SURE?].
 
-\subsection{Outlier detection in PCA}
+\subsection{Outlier detection in PCA [SPLIT IN MULTIPLE SECTIONS]}
 
 We propose [BOF] different outlier detection techniques for PCA.
 
@@ -133,7 +133,7 @@ The standard upper limit defined by Tukey's rule is $q_{75\%}(x) + 1.5 \cdot IQR
 However, there are two pitfalls when using Tukey's rule. First, Tukey's rule assumes a normally distributed sample. For example, when the data is skewed, it does not work that well. We account for skewness using the medcouple \cite[]{hubert2008adjusted}. Standard Tukey's rule also uses a fixed coefficient (1.5) that does not account for multiple testing, which means that for large samples, there are always some outliers detected when using 1.5. 
 To solve these two issues, we implement \texttt{tukey\_mc\_up} in R package bigutilsr and use it here, which accounts both for skewness and multiple testing by default.
 
-\subsection{Subsetted version of 1000G data [RENAME?]}
+\subsection{Subsetted version of 1000G data [RENAME?]\label{1000G}}
 
 We provide a subsetted version of the 1000 genomes (1000G) project data \cite[]{10002015global,meyer2019genotype}.
 Variants are restricted to the ones in common with HapMap3 and UK Biobank \cite[]{international2010integrating,bycroft2017genome}. 
@@ -144,13 +144,13 @@ Resulting PLINK files and R code to generate these files are available at \url{h
 To easily download these data, we provide a function called \texttt{download\_1000G} in R package bigsnpr.
 
 
-\subsection{Projecting PCs from a reference dataset}
+\subsection{Projecting PCs from a reference dataset\label{proj}}
 
 To project PCs of a reference dataset (e.g.\ 1000G) to a target genotype data, we implement the following 3 steps in function \texttt{bed\_projectPCA} of package bigsnpr:
 \begin{enumerate}
 \item matching the variants of each dataset, including removing ambiguous alleles [A/T] and [C/G], and matching strand and direction of the alleles;
 \item computing PCA of the reference dataset using the matched variants only;
-\item projecting computed PCs to the target data using an optimised implementation of the Online Augmentation, Decomposition, and Procrustes (OADP) transformation \cite[]{zhang2019fast} described in Supplementary Materials.
+\item projecting computed PCs to the target data using an optimised implementation of the Online Augmentation, Decomposition, and Procrustes (OADP) transformation \cite[]{zhang2019fast}, which we describe in Supplementary Materials.
 \end{enumerate}
 
 %For step 4, we implement a shrinkage-bias adjustment method that combines the two methods proposed by \cite{zhang2019fast}. First, for only a subset of target individuals, we compute the Online Augmentation, Decomposition, and Procrustes (OADP) transformation (using $K''=K'=K$ [REMOVE?]). For these individuals, we regress the new PC scores resulting from OADP by the projected PC scores without adjustement; this gives us shrinkage-adjustment factors that we use to correct projected PC scores for all target individuals.
@@ -161,6 +161,21 @@ To project PCs of a reference dataset (e.g.\ 1000G) to a target genotype data, w
 
 \section{Results}
 
+\subsection{Projecting PCs from a reference dataset}
+
+We use 60\% of individuals in the 1000G data (section \ref{1000G}) to compute the PCA ($K=20$ PCs). Then, we project the remaining 40\% individuals using two methods: 1/ simply multiplying the genotypes of these individuals by the previously computed loadings, and 2/ the OADP projection (section \ref{proj}). 
+When simply projecting using loadings, there is no apparent shrinkage for PC1 and PC2, a weak [REWORD?] shrinkage for PC3 and PC4, and a large shrinkage for PC5 to PC8 (Figure \ref{fig:proj1000G}).
+In contrast, there is no apparent shrinkage when projecting new individuals with OADP (Figure \ref{fig:proj1000G}).
+Simple projection is affected even more by this shrinkage for PC9 to PC20, while OADP appears free of this issue (Figure \ref{fig:proj1000G-2}).
+
+\begin{figure}[!htpb]
+\centerline{\includegraphics[width=0.8\textwidth]{proj1000G-PC1-8.pdf}}
+\caption{Principal Component (PC) scores 1 to 8 of the 1000 Genomes project.
+Black points are the 60\% individuals used for computing PCA.
+Red points are the 40\% remaining individuals, projected by simply multiplying their genotypes by the corresponding PC loadings.
+Blue points are the 40\% remaining individuals, projected using the Online Augmentation, Decomposition, and Procrustes (OADP) transformation.
+\label{fig:proj1000G}}
+\end{figure}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -202,6 +217,11 @@ This research has been conducted using the UK Biobank Resource under Application
 \newpage
 \section*{Supplementary Materials}
 
+\renewcommand{\thefigure}{S\arabic{figure}}
+\setcounter{figure}{0}
+\renewcommand{\thetable}{S\arabic{table}}
+\setcounter{table}{0}
+
 \subsection*{Optimised OADP transformation}
 
 We implement an optimised version of the Online Augmentation, Decomposition, and Procrustes (OADP) transformation when using $K''=K'=K$ \cite[]{zhang2019fast}.
@@ -216,7 +236,6 @@ We assume that the $K$-partial Singular Value Decomposition (SVD) of the referen
 \item Finally, multipy by $\Delta$.
 \end{enumerate}
 
-[CAN COMPUTE SVD OF $V'[1{:}K,~]$ FROM LOW-RANK UPDATE?]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -225,18 +244,20 @@ We assume that the $K$-partial Singular Value Decomposition (SVD) of the referen
 \vspace*{1em}
 
 \begin{figure}[!htpb]
-%\centerline{\includegraphics[width=0.8\textwidth]{AUC-simu2.pdf}}
-\caption{}
-\label{fig:AUC-simu2}
+\centerline{\includegraphics[width=0.8\textwidth]{proj1000G-PC9-20.pdf}}
+\caption{Principal Component (PC) scores 9 to 20 of the 1000 Genomes project.
+Black points are the 60\% individuals used for computing PCA.
+Red points are the 40\% remaining individuals, projected by simply multiplying their genotypes by the corresponding PC loadings.
+Blue points are the 40\% remaining individuals, projected using the Online Augmentation, Decomposition, and Procrustes (OADP) transformation.
+\label{fig:proj1000G-2}}
 \end{figure}
-
 
 \vspace*{1em}
 
 % latex table generated in R 3.5.2 by xtable 1.8-4 package
 % Wed Jun 19 15:19:38 2019
 \begin{table}[!htpb]
-\caption{AUC values on the test set for simulations with less well imputed variants (mean [95\% CI] from $10^4$ bootstrap samples). These results are plotted in figure \ref{fig:AUC-simu2}.\label{tab:AUC-simu2}}
+\caption{\label{tab:AUC-simu2}}
 \vspace*{0.5em}
 \centering
 \begin{tabular}{|l|c|c|c|c|}
