@@ -61,32 +61,38 @@
 \begin{document}
 
 
-\title{Principal Component Analysis of Population Genetic Data}
-\author{Florian Priv\'e,$^{\text{1,2,}*}$ Keurcien Luu, Clara Albi\~nana Climent,$^{\text{2}}$ Michael G.B. Blum,$^{\text{1,}*}$ and Bjarni J. Vilhj\'almsson$^{\text{2}}$}
-
-
+\title{Efficient toolkit implementing best practices for principal component analysis of population genetic data}
+\author{Florian Priv\'e,$^{\text{1,}*}$ John J. McGrath,$^{\text{1,2,3}}$ and Bjarni J. Vilhj\'almsson$^{\text{1,}*}$}
 
 \date{~ }
 \maketitle
 
-\noindent$^{\text{\sf 1}}$Laboratoire TIMC-IMAG, UMR 5525, Univ.\ Grenoble Alpes, CNRS, La Tronche, France, \\
-\noindent$^{\text{\sf 2}}$National Centre for Register-based Research (NCRR), Aarhus University, Denmark. \\
+\noindent$^{\text{\sf 1}}$National Centre for Register-Based Research, Aarhus University, Aarhus, 8210, Denmark. \\
+\noindent$^{\text{\sf 2}}$Queensland Brain Institute, University of Queensland, St. Lucia, 4072, Queensland, Australia. \\
+\noindent$^{\text{\sf 3}}$Queensland Centre for Mental Health Research, The Park Centre for Mental Health, Wacol, 4076, Queensland, Australia.\\
+
+
+
+
+
 
 \noindent$^\ast$To whom correspondence should be addressed.\\
 
 \noindent Contacts:
 \begin{itemize}
 \item \url{florian.prive.21@gmail.com}
-\item \url{keurcien.luu@gmail.com}
-\item \url{clara@econ.au.dk}
-\item \url{michael.blum@univ-grenoble-alpes.fr}
+\item \url{john_mcgrath@qcmhr.uq.edu.au}
 \item \url{bjv@econ.au.dk}
 \end{itemize}
 
 \newpage
 
 \abstract{
+Principal Component Analysis (PCA) of genetic data is routinely used to infer ancestry and control for population structure in various genetic analyses. However, conducting PCA in large populations is complicated, and there are several potential pitfalls. These pitfalls include (1) capturing Linkage Disequilibrium (LD) structure instead of population structure, (2) projected PCs that suffer from shrinkage bias when projecting PCA from a reference dataset to another independent dataset, and (3) detecting sample outliers. In this work, we explore these pitfalls of using PCA, and present efficient solutions to these pitfalls. Following applications to diverse datasets, we make recommendations for best practices and implement the proposed solutions in an efficient and user-friendly toolkit for performing these analyses in the R packages bigsnpr and bigutilsr.
 
+For example, we show that PC18 to PC40 in the UK Biobank are capturing LD structure. Using our automatic algorithm for removing long-range LD region, we are able to recover only 17 PCs that capture population structure only. Therefore, we recommend using only 17 PCs from the UK Biobank. Another example: when projecting the PCA computed on the 1000 Genomes project, although PC1 to PC4 suffer from only moderate shrinkage (1.00-1.08), PC5 for example suffers from a shrinkage factor of 1.51 and PC10 from a shrinkage factor of 3.16. We provide a fast way to project new individuals that is mostly free of this shrinkage bias. We also show how to restrict to individuals that are genetically homogeneous based on PCA. 
+
+Overall, we believe this work would be of interest for anyone using PCA in their analyses of genetic data.
 }
 
 
@@ -146,16 +152,8 @@ To easily download these data, we provide a function called \texttt{download\_10
 
 \subsection{Projecting PCs from a reference dataset\label{proj}}
 
-To project PCs of a reference dataset (e.g.\ 1000G) to a target genotype data, we implement the following 3 steps in function \texttt{bed\_projectPCA} of package bigsnpr:
-\begin{enumerate}
-\item matching the variants of each dataset, including removing ambiguous alleles [A/T] and [C/G], and matching strand and direction of the alleles;
-\item computing PCA of the reference dataset using the matched variants only;
-\item projecting computed PCs to the target data using an optimised implementation of the Online Augmentation, Decomposition, and Procrustes (OADP) transformation \cite[]{zhang2019fast}, which we describe in Supplementary Materials.
-\end{enumerate}
-
-%For step 4, we implement a shrinkage-bias adjustment method that combines the two methods proposed by \cite{zhang2019fast}. First, for only a subset of target individuals, we compute the Online Augmentation, Decomposition, and Procrustes (OADP) transformation (using $K''=K'=K$ [REMOVE?]). For these individuals, we regress the new PC scores resulting from OADP by the projected PC scores without adjustement; this gives us shrinkage-adjustment factors that we use to correct projected PC scores for all target individuals.
-
-%This requires computing all eigenvalues of the reference dataset, which is relatively fast to compute for the 2493 individuals of the 1000G. However, it can be computionally expensive if the reference data used includes many more individuals [BETWEEN O($N^2$) AND O($N^3$); MENTION IT?].
+To project PCs of a reference dataset (e.g.\ 1000G) to a target genotype dataset, we implement the following 3 steps in function \texttt{bed\_projectPCA} of package bigsnpr: 1) matching the variants of each dataset, including removing ambiguous alleles [A/T] and [C/G], and matching strand and direction of the alleles; 2) computing PCA of the reference dataset using the matched variants only; 3) projecting computed PCs to the target data using an optimised implementation (see Supplementary Materials) of the Online Augmentation, Decomposition, and Procrustes (OADP) transformation \cite[]{zhang2019fast}.
+Note that you can also use function \texttt{bed\_projectPCA} to project individuals from the reference dataset that were not used during the PCA computation (e.g.\ related people). 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -229,11 +227,11 @@ We assume that the $K$-partial Singular Value Decomposition (SVD) of the referen
 \begin{enumerate}
 \item Calculate $l = y \cdot V$ (of size $1 \times K$), where $V$ are the K PC loadings. And $g = y \cdot h^T$ (of size $1 \times 1$), where $h = (y - l \cdot V^T) / ||y - l \cdot V^T||_2$. Actually, $||y - l \cdot V^T||_2^2 = y \cdot y^T - 2 \cdot y \cdot V \cdot l^T  + l \cdot V^T \cdot V \cdot l^T = y \cdot y^T - l \cdot l^T$ and $y \cdot (y - l \cdot V^T)^T = y \cdot y^T - y \cdot V \cdot l^T = y \cdot y^T - l \cdot l^T$. Then $g = \sqrt{y \cdot y^T - l \cdot l^T}$.
 \item Calculate $Q^T Q$ where $$Q = \begin{bmatrix} \Delta & l^T \\ 0 & g \end{bmatrix}$$ so that $$Q^TQ = \begin{bmatrix} \Delta^2 & \Delta \cdot l^T \\ l \cdot \Delta & g^2 + l \cdot l^T \end{bmatrix} = \begin{bmatrix} \Delta^2 & \Delta \cdot l^T \\ l \cdot \Delta & y \cdot y^T \end{bmatrix}.$$ Note that we do not actually need to compute $g$, and that we can update the last row and column of $Q^T Q$ instead of computing it from an updated version of $Q$.
-\item Get the eigen decomposition $Q^T Q = V' {\Delta'}^2 {V'}^T$ (truncated to $K$ components out of the $K+1$).
-\item Calculate $$\begin{bmatrix} \widetilde{U} \\ \widetilde{u}  \end{bmatrix} = \begin{bmatrix} U & 0 \\ 0 & 1 \end{bmatrix} V' = \begin{bmatrix} U V'[1{:}K,~] \\ V'[K{+}1,~] \end{bmatrix} $$
-\item Find the Procrustes transformation from $\widetilde{U}$ to $U$. As $\widetilde{U}$ and $U$ have both their columns centered already, the Procrustes transformation $\rho ~\widetilde{U} A$, where $\rho$ is a scaling coefficient and $A$ is an orthonomal projection matrix that minimise the Frobenius norm of $(\rho \widetilde{U} A - U)$, is given by $A = V'' {U''}^T$ and $\rho = \frac{\text{trace}(\Delta'')}{\text{trace}(\widetilde{U}^T \widetilde{U})}$ where $U'' \Delta'' {V''}^T$ is the full SVD of $U^T \widetilde{U} = V'[1{:}K,~]$ \cite[]{wang2015improved}. Then, $\rho = \frac{\text{trace}(\Delta'')}{\text{trace}(\widetilde{U}^T \widetilde{U})} = \frac{\text{trace}(\Delta'')}{\text{trace}({V'[1{:}K,~]}^T V'[1{:}K,~])} = \frac{\text{trace}(\Delta'')}{\text{trace}(\Delta''^2)}$. 
-\item Apply the previous transformation to $\widetilde{u}$ to get the projection of $y$ in the reference PCA space (i.e.\ $\rho \widetilde{u} A$),.
-\item Finally, multipy by $\Delta$.
+\item Get the eigen decomposition $Q^T Q = V' {\Delta'}^2 {V'}^T$ (truncated to $K$ components out of the $K+1$). Let us denote $V_2 = V' {\Delta'}$.
+\item Calculate $$\begin{bmatrix} \widetilde{U} \\ \widetilde{u}  \end{bmatrix} = \begin{bmatrix} U & 0 \\ 0 & 1 \end{bmatrix} V_2 = \begin{bmatrix} U V_2[1{:}K,~] \\ V_2[K{+}1,~] \end{bmatrix} $$
+\item Find the Procrustes transformation from $\widetilde{U}$ to $U \Delta$. As $\widetilde{U}$ and $U \Delta$ have both their columns centered already (since $U$ does), the Procrustes transformation $\rho \widetilde{U} A$, where $\rho$ is a scaling coefficient and $A$ is an orthonomal projection matrix that minimise the Frobenius norm of $(\rho \widetilde{U} A - U)$, is given by $A = V'' {U''}^T$ and $\rho = \frac{\text{trace}(\Delta'')}{\text{trace}(\widetilde{U}^T \widetilde{U})}$ where $U'' \Delta'' {V''}^T$ is the full SVD of $(U \Delta)^T \widetilde{U}$ \cite[]{wang2015improved}. 
+As $U^T U = I$, we note that $(U \Delta)^T \widetilde{U} = \Delta V_2[1{:}K,~]$ and that $\rho = \frac{\text{trace}(\Delta'')}{\text{trace}({V_2[1{:}K,~]}^T V_2[1{:}K,~])}$, therefore we do not need to explicitly compute $\widetilde{U}$. 
+\item Apply the previous transformation to $\widetilde{u}$ to get the projection of $y$ in the reference PCA space (i.e.\ $\rho \widetilde{u} A$).
 \end{enumerate}
 
 
@@ -244,12 +242,23 @@ We assume that the $K$-partial Singular Value Decomposition (SVD) of the referen
 \vspace*{1em}
 
 \begin{figure}[!htpb]
-\centerline{\includegraphics[width=0.8\textwidth]{proj1000G-PC9-20.pdf}}
+\centerline{\includegraphics[width=0.9\textwidth]{proj1000G-PC9-20.pdf}}
 \caption{Principal Component (PC) scores 9 to 20 of the 1000 Genomes project.
+Black points are the 60\% individuals used for computing PCA.
+Green points are the 40\% remaining individuals, projected by simply multiplying their genotypes by the corresponding PC loadings, corrected using theoritical asymptotic shrinkage factors.
+Blue points are the 40\% remaining individuals, projected using the Online Augmentation, Decomposition, and Procrustes (OADP) transformation.
+\label{fig:proj1000G-2}}
+\end{figure}
+
+\vspace*{1em}
+
+\begin{figure}[!htpb]
+\centerline{\includegraphics[width=0.9\textwidth]{proj1000G-PC5-12.pdf}}
+\caption{Principal Component (PC) scores 5 to 12 of the 1000 Genomes project.
 Black points are the 60\% individuals used for computing PCA.
 Red points are the 40\% remaining individuals, projected by simply multiplying their genotypes by the corresponding PC loadings.
 Blue points are the 40\% remaining individuals, projected using the Online Augmentation, Decomposition, and Procrustes (OADP) transformation.
-\label{fig:proj1000G-2}}
+\label{fig:proj1000G-3}}
 \end{figure}
 
 \vspace*{1em}
