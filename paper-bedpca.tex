@@ -152,8 +152,9 @@ To easily download these data, we provide a function called \texttt{download\_10
 
 \subsection{Projecting PCs from a reference dataset\label{proj}}
 
+[SEPARATE STEPS?]
+
 To project PCs of a reference dataset (e.g.\ 1000G) to a target genotype dataset, we implement the following 3 steps in function \texttt{bed\_projectPCA} of package bigsnpr: 1) matching the variants of each dataset, including removing ambiguous alleles [A/T] and [C/G], and matching strand and direction of the alleles; 2) computing PCA of the reference dataset using the matched variants only; 3) projecting computed PCs to the target data using an optimised implementation (see Supplementary Materials) of the Online Augmentation, Decomposition, and Procrustes (OADP) transformation \cite[]{zhang2019fast}.
-Note that you can also use function \texttt{bed\_projectPCA} to project individuals from the reference dataset that were not used during the PCA computation (e.g.\ related people). 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -161,10 +162,12 @@ Note that you can also use function \texttt{bed\_projectPCA} to project individu
 
 \subsection{Projecting PCs from a reference dataset}
 
-We use 60\% of individuals in the 1000G data (section \ref{1000G}) to compute the PCA ($K=20$ PCs). Then, we project the remaining 40\% individuals using two methods: 1/ simply multiplying the genotypes of these individuals by the previously computed loadings, and 2/ the OADP projection (section \ref{proj}). 
+We use 60\% of individuals in the 1000G data (section \ref{1000G}) to compute the PCA ($K=20$ PCs). Then, we project the remaining 40\% individuals using three methods: 1/ simply multiplying the genotypes of these individuals by the previously computed loadings, 2/ correcting the simple projections using asymptotic shrinkage factors as determined by R package hdpca v1.0.0 \cite[]{dey2019asymptotic} and 3/ the OADP projection (section \ref{proj}). 
 When simply projecting using loadings, there is no apparent shrinkage for PC1 and PC2, a weak [REWORD?] shrinkage for PC3 and PC4, and a large shrinkage for PC5 to PC8 (Figure \ref{fig:proj1000G}).
 In contrast, there is no apparent shrinkage when projecting new individuals with OADP (Figure \ref{fig:proj1000G}).
 Simple projection is affected even more by this shrinkage for PC9 to PC20, while OADP appears free of this issue (Figure \ref{fig:proj1000G-2}).
+When correcting projected PC scores with asymptotic shrinkage factors, bias is smaller than when simply projecting loadings, yet, it is apparent for PC7-8 and PC11-12 (Figure \ref{fig:proj1000G-3}).
+Finally, to assess if OADP could be used to project individuals that are related to some individuals that were used to compute PCA, we projected these individuals (as if we were projecting their monozygotic twins) using OADP. Projections of related individuals using OADP shows some reverse [REWORD?] shrinkage (Figure \ref{fig:proj1000G-4}).
 
 \begin{figure}[!htpb]
 \centerline{\includegraphics[width=0.8\textwidth]{proj1000G-PC1-8.pdf}}
@@ -181,6 +184,10 @@ Blue points are the 40\% remaining individuals, projected using the Online Augme
 \section{Discussion}
 
 [LIMITATION: RUN MULTIPLE TIMES / FAIL TO SPEED UP]
+
+\noindent[LIMITATION 2: FAIL TO PROJECT RELATED INDIVIDUALS WITH OADP.]
+
+\noindent[LIMITATION 3: FAIL TO AUTOMATICALLY DETECT OUTLIER SAMPLES.]
 
 \noindent[DISCUSS ABOUT $K''=K'=K$? FASTER, EASIER, DO NOT WANT MORE DIM?]
 
@@ -245,7 +252,7 @@ As $U^T U = I$, we note that $(U \Delta)^T \widetilde{U} = \Delta V_2[1{:}K,~]$ 
 \centerline{\includegraphics[width=0.9\textwidth]{proj1000G-PC9-20.pdf}}
 \caption{Principal Component (PC) scores 9 to 20 of the 1000 Genomes project.
 Black points are the 60\% individuals used for computing PCA.
-Green points are the 40\% remaining individuals, projected by simply multiplying their genotypes by the corresponding PC loadings, corrected using theoritical asymptotic shrinkage factors.
+Red points are the 40\% remaining individuals, projected by simply multiplying their genotypes by the corresponding PC loadings.
 Blue points are the 40\% remaining individuals, projected using the Online Augmentation, Decomposition, and Procrustes (OADP) transformation.
 \label{fig:proj1000G-2}}
 \end{figure}
@@ -256,9 +263,17 @@ Blue points are the 40\% remaining individuals, projected using the Online Augme
 \centerline{\includegraphics[width=0.9\textwidth]{proj1000G-PC5-12.pdf}}
 \caption{Principal Component (PC) scores 5 to 12 of the 1000 Genomes project.
 Black points are the 60\% individuals used for computing PCA.
-Red points are the 40\% remaining individuals, projected by simply multiplying their genotypes by the corresponding PC loadings.
+Green points are the 40\% remaining individuals, projected by multiplying their genotypes by the corresponding PC loadings, further corrected using theoritical asymptotic shrinkage factors.
 Blue points are the 40\% remaining individuals, projected using the Online Augmentation, Decomposition, and Procrustes (OADP) transformation.
 \label{fig:proj1000G-3}}
+\end{figure}
+
+\begin{figure}[!htpb]
+\centerline{\includegraphics[width=0.9\textwidth]{proj1000G-related.pdf}}
+\caption{Principal Component (PC) scores 5 to 12 of the 1000 Genomes project.
+Black points are the 60\% individuals used for computing PCA.
+Blue points are the same 60\% individuals, projected using the Online Augmentation, Decomposition, and Procrustes (OADP) transformation.
+\label{fig:proj1000G-4}}
 \end{figure}
 
 \vspace*{1em}
