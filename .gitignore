@@ -12,3 +12,4 @@ paper*.pdf
 *.synctex.gz
 *.aux
 *.tex.bak
+data
