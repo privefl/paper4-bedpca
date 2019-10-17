@@ -124,6 +124,10 @@ When there is no missing value, we compute the partial Singular Value Decomposit
 When there is some missing values, we compute the partial SVD similarly, except that missing values are replaced by the variant means (i.e.\ $G_{i,j} - 2 \hat{f_j} = 0$ when $G_{i,j}$ is missing) and  the $\hat{f_j}$ for each variant are estimated using only non missing values of each variant.
 Note that this decomposition is equivalent to the decomposition presented above after imputation by the variant means [SURE?].
 
+\subsection{Robust Mahalanobis distance\label{maha}}
+
+In this paper, for many applications, we use the pairwise orthogonalized Gnanadesikan-Kettenrin robust Mahalanobis distance as implemented in function \texttt{covRob} of R package robust with parameter \texttt{estim = "pairwiseGK"} \cite[]{gnanadesikan1972robust,yohai1988high,maronna2002robust,todorov2009object}. We reexport this function in R package bigutilsr for convenience.
+
 \subsection{Outlier detection in PCA [SPLIT IN MULTIPLE SECTIONS]}
 
 We propose [BOF] different outlier detection techniques for PCA.
@@ -152,9 +156,13 @@ To easily download these data, we provide a function called \texttt{download\_10
 
 \subsection{Projecting PCs from a reference dataset\label{proj}}
 
-[SEPARATE STEPS?]
+%[SEPARATE STEPS?]
 
 To project PCs of a reference dataset (e.g.\ 1000G) to a target genotype dataset, we implement the following 3 steps in function \texttt{bed\_projectPCA} of package bigsnpr: 1) matching the variants of each dataset, including removing ambiguous alleles [A/T] and [C/G], and matching strand and direction of the alleles; 2) computing PCA of the reference dataset using the matched variants only; 3) projecting computed PCs to the target data using an optimised implementation (see Supplementary Materials) of the Online Augmentation, Decomposition, and Procrustes (OADP) transformation \cite[]{zhang2019fast}.
+
+\subsection{Ancestry estimation}
+
+We use the 1000 Genomes (1000G) Project data (section \ref{1000G}) to infer the ancestry of individuals from a study dataset following the following steps: 1) we compute the robust center and covariance parameters of the Mahalanobis distance (section \ref{maha}) for each of the 26 populations of the 10000G data; 2) we project individuals from the study dataset onto the PCA space computed using the 1000G data (section \ref{proj}); 3) we compute the Mahalanobis distance for each projected individual of the study data and each population of the 1000G data (using the center and covariance parameters computed previously); 4) we derive p-values from those distances, as they are approximately chi-squared distributed with the number of PCs used for computing the distances as degrees of freedom; 5) we affect each individual to the largest corresponding p-value (smallest distance), but discard individuals whose maximum p-value is less than 0.05 (i.e. individuals far from every population of the 1000G data). 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -166,6 +174,7 @@ We use 60\% of individuals in the 1000G data (section \ref{1000G}) to compute th
 When simply projecting using loadings, there is no apparent shrinkage for PC1 and PC2, a weak [REWORD?] shrinkage for PC3 and PC4, and a large shrinkage for PC5 to PC8 (Figure \ref{fig:proj1000G}).
 In contrast, there is no apparent shrinkage when projecting new individuals with OADP (Figure \ref{fig:proj1000G}).
 Simple projection is affected even more by this shrinkage for PC9 to PC20, while OADP appears free of this issue (Figure \ref{fig:proj1000G-2}).
+We show the same results when projecting the full UK Biobank data onto PCA computed using 1000G data  (Figure \ref{fig:proj1000G-5}).
 When correcting projected PC scores with asymptotic shrinkage factors, bias is smaller than when simply projecting loadings, yet, it is apparent for PC7-8 and PC11-12 (Figure \ref{fig:proj1000G-3}).
 Finally, to assess if OADP could be used to project individuals that are related to some individuals that were used to compute PCA, we projected these individuals (as if we were projecting their monozygotic twins) using OADP. Projections of related individuals using OADP shows some reverse [REWORD?] shrinkage (Figure \ref{fig:proj1000G-4}).
 
@@ -274,6 +283,14 @@ Blue points are the 40\% remaining individuals, projected using the Online Augme
 Black points are the 60\% individuals used for computing PCA.
 Blue points are the same 60\% individuals, projected using the Online Augmentation, Decomposition, and Procrustes (OADP) transformation.
 \label{fig:proj1000G-4}}
+\end{figure}
+
+\begin{figure}[!htpb]
+\centerline{\includegraphics[width=0.9\textwidth]{proj1000G-UKBB.png}}
+\caption{Principal Component (PC) scores 1 to 16 of the 1000 Genomes project and projected individuals from the UK Biobank.
+Black points are PC scores of 1000G individuals used for computing PCA.
+Blue points are the 488,371 individuals from the UK Biobank, projected using the Online Augmentation, Decomposition, and Procrustes (OADP) transformation. Note that only 20,000 random individuals are represented in this plot.
+\label{fig:proj1000G-5}}
 \end{figure}
 
 \vspace*{1em}
