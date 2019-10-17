@@ -128,20 +128,28 @@ Note that this decomposition is equivalent to the decomposition presented above 
 
 In this paper, for many applications, we use the pairwise orthogonalized Gnanadesikan-Kettenrin robust Mahalanobis distance as implemented in function \texttt{covRob} of R package robust with parameter \texttt{estim = "pairwiseGK"} \cite[]{gnanadesikan1972robust,yohai1988high,maronna2002robust,todorov2009object}. We reexport this function in R package bigutilsr for convenience.
 
-\subsection{Outlier detection in PCA [SPLIT IN MULTIPLE SECTIONS]}
+\subsection{Detecting LD structure in PCA}
 
-We propose [BOF] different outlier detection techniques for PCA.
-
-For detecting outlier variants in PCA that are due to long-range Linkage Disequilibrium (LD) regions, we use the same procedure as described by \cite{prive2017efficient}: we compute pcadapt statistics \cite[]{luu2017pcadapt} that summarises the contribution of each variant in all PC loadings computed. This captures both population-differentiating variants as well as long-range LD regions. We then smooth the statistics [BE MORE PRECISE?] to mostly capture consecutive outliers that corresponds to long-range LD regions.
-
-For detecting outlier samples in PCA, we use the Local Outlier Factor (LOF) on PCs \cite[]{breunig2000lof}. To make it robust to the choice of the number of nearest neighbours (kNN), we take the maximum value of the statistic computed with kNN $\in$ \{4, 5, 6, 7, 8\}. We do not use larger values for `kNN' because it would remove small ancestry groups (e.g.\ composed of 10-15 people only). We make use of the fast K nearest neighbours implementation of R package nabor to implement the LOF statistic efficiently in our new R package bigutilsr \cite[]{elseberg2012comparison}.
- 
-For detecting samples that have a different ancestry from most of the samples in the data, we compute the pairwise orthogonalized Gnanadesikan-Kettenrin robust Mahalanobis distance of PCs \cite[]{gnanadesikan1972robust,maronna2002robust}, and do not include individuals whose log-distance is larger than some threshold determined based on visual inspection [DO IT AUTOMATIC?].
+For detecting outlier variants in PCA that are due to long-range Linkage Disequilibrium (LD) regions, we use a slightly modified version of the procedure described by \cite{prive2017efficient}. 
+To summarise the contribution of each variant in all PC loadings, we compute the robust Mahalanobis distances (Section \ref{maha}) of PC loadings.  
+This captures both population-differentiating variants as well as long-range LD regions. 
+Then, to capture consecutive outliers that corresponds to long-range LD regions, we apply a Gaussian smoothing to these statistics.
 
 Finally, to choose the threshold of outlierness based on the previously described statistics, we use a modified version of Tukey's rule, a standard rule for detecting outliers \cite[]{tukey77}. 
 The standard upper limit defined by Tukey's rule is $q_{75\%}(x) + 1.5 \cdot IQR(x)$, where $x$ is the vector of computed statistics and $IQR(x) = q_{75\%}(x) - q_{25\%}(x)$ is the interquartile range.
 However, there are two pitfalls when using Tukey's rule. First, Tukey's rule assumes a normally distributed sample. For example, when the data is skewed, it does not work that well. We account for skewness using the medcouple \cite[]{hubert2008adjusted}. Standard Tukey's rule also uses a fixed coefficient (1.5) that does not account for multiple testing, which means that for large samples, there are always some outliers detected when using 1.5. 
 To solve these two issues, we implement \texttt{tukey\_mc\_up} in R package bigutilsr and use it here, which accounts both for skewness and multiple testing by default.
+
+\subsection{Detecting outlier samples in PCA}
+
+We propose [BOF] different outlier detection techniques for PCA.
+
+
+For detecting outlier samples in PCA, we use the Local Outlier Factor (LOF) on PCs \cite[]{breunig2000lof}. To make it robust to the choice of the number of nearest neighbours (kNN), we take the maximum value of the statistic computed with kNN $\in$ \{4, 5, 6, 7, 8\}. We do not use larger values for `kNN' because it would remove small ancestry groups (e.g.\ composed of 10-15 people only). We make use of the fast K nearest neighbours implementation of R package nabor to implement the LOF statistic efficiently in our new R package bigutilsr \cite[]{elseberg2012comparison}.
+ 
+For detecting samples that have a different ancestry from most of the samples in the data, we compute the pairwise orthogonalized Gnanadesikan-Kettenrin robust Mahalanobis distance of PCs \cite[]{gnanadesikan1972robust,maronna2002robust}, and do not include individuals whose log-distance is larger than some threshold determined based on visual inspection [DO IT AUTOMATIC?].
+
+
 
 \subsection{Subsetted version of 1000G data [RENAME?]\label{1000G}}
 
@@ -160,9 +168,9 @@ To easily download these data, we provide a function called \texttt{download\_10
 
 To project PCs of a reference dataset (e.g.\ 1000G) to a target genotype dataset, we implement the following 3 steps in function \texttt{bed\_projectPCA} of package bigsnpr: 1) matching the variants of each dataset, including removing ambiguous alleles [A/T] and [C/G], and matching strand and direction of the alleles; 2) computing PCA of the reference dataset using the matched variants only; 3) projecting computed PCs to the target data using an optimised implementation (see Supplementary Materials) of the Online Augmentation, Decomposition, and Procrustes (OADP) transformation \cite[]{zhang2019fast}.
 
-\subsection{Ancestry estimation}
+\subsection{Ancestry estimation\label{ancestry}}
 
-We use the 1000 Genomes (1000G) Project data (section \ref{1000G}) to infer the ancestry of individuals from a study dataset following the following steps: 1) we compute the robust center and covariance parameters of the Mahalanobis distance (section \ref{maha}) for each of the 26 populations of the 10000G data; 2) we project individuals from the study dataset onto the PCA space computed using the 1000G data (section \ref{proj}); 3) we compute the Mahalanobis distance for each projected individual of the study data and each population of the 1000G data (using the center and covariance parameters computed previously); 4) we derive p-values from those distances, as they are approximately chi-squared distributed with the number of PCs used for computing the distances as degrees of freedom; 5) we affect each individual to the largest corresponding p-value (smallest distance), but discard individuals whose maximum p-value is less than 0.05 (i.e. individuals far from every population of the 1000G data). 
+We use the 1000 Genomes (1000G) Project data (section \ref{1000G}) to infer the ancestry of individuals from a study dataset following the following steps: 1) we compute the robust center and covariance parameters of the Mahalanobis distance (section \ref{maha}) for each of the 26 populations of the 10000G data; 2) we project individuals from the study dataset onto the PCA space computed using the 1000G data (section \ref{proj}); 3) we compute the Mahalanobis distance for each projected individual of the study data and each population of the 1000G data (using the center and covariance parameters computed previously); 4) we derive p-values from those distances, as they are approximately chi-squared distributed with the number of PCs used for computing the distances as degrees of freedom; 5) we affect each individual to the largest corresponding p-value (smallest distance), but discard individuals whose maximum p-value is less than 0.05 (i.e.\ individuals far from every population of the 1000G data). 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -187,12 +195,71 @@ Blue points are the 40\% remaining individuals, projected using the Online Augme
 \label{fig:proj1000G}}
 \end{figure}
 
+\subsection{Ancestry estimation}
+
+[REDO WITH OUTLIER REMOVAL]
+
+We performed ancestry estimation of the individuals in the UK Biobank using the 1000G data (Section \ref{ancestry}), discarding individuals with unknown ancestry or mixed ancestry. 
+We did not infer ancestry for 15.5\% of UK Biobank that had a maximum p-value smaller than 0.05 (Figure \ref{fig:ancestry-pval}). 
+More precisely, among ``White'', ``British'' and ``Irish'' ancestries, this represented respectively 20.4\%, 10.5\% and 19.8\%, while this represented between 48.5\% (``Chinese'') and 81.4\% (``Bangladeshi''). 
+In other words, most of the UK Biobank individual who self reports as ``Bangladeshi'' could not be attributed to any 1000G population, although 1000G data includes some ``Bengali in Bangladesh'' population.
+Only 10 people out of 401,048 were wrongly classified in super population of the 1000G; e.g.\ one Chinese was classified as European by our method (Table \ref{tab:ancestry-pred}). 
+Our method is able to accurately differentiate between sub-continental populations such as differentiating between Pakistani, Bangladeshi and Chinese people (Table \ref{tab:ancestry-pred}).
+
+% latex table generated in R 3.6.0 by xtable 1.8-4 package
+% Thu Oct 17 13:58:41 2019
+\begin{table}[ht]
+\centering
+\caption{Self-reported ancestry (top) of UKBB individuals and their matching to 1000G populations (left) by our method. See the description of 1000G populations at \url{https://www.internationalgenome.org/category/population/}.} 
+\label{tab:ancestry-pred}
+\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|c|}
+  \hline
+ & British & Irish & White & Other White & Indian & Pakistani & Bangladeshi & Chinese & Other Asian & Caribbean & African & Other Black \\ 
+  \hline
+AFR\_ACB &  &  &  &  &  &  &  &  &  & 1635 & 510 & 27 \\ 
+  AFR\_ASW &  &  &  &  &  &  &  &  &  & 488 & 23 & 14 \\ 
+  AFR\_ESN &  &  &  &  &  &  &  &  &  &  & 103 &  \\ 
+  AFR\_GWD &  &  &  &  &  &  &  &  &  &  & 15 &  \\ 
+  AFR\_LWK &  &  &  &  &  &  &  &  &  &  & 38 &  \\ 
+  AFR\_MSL &  &  &  &  &  &  &  &  &  &  & 25 &  \\ 
+  AFR\_YRI &  &  &  &  &  &  &  &  &  & 4 & 433 & 4 \\ 
+   \hline
+AMR\_CLM & 1 &  &  & 53 &  &  &  &  &  &  &  &  \\ 
+  AMR\_MXL &  &  & 1 & 3 &  &  &  &  &  &  &  &  \\ 
+  AMR\_PEL &  &  &  & 1 &  &  &  &  &  &  &  &  \\ 
+  AMR\_PUR &  &  &  &  &  &  &  &  &  &  &  &  \\ 
+   \hline
+EAS\_CDX &  &  &  &  &  &  &  & 1 &  &  &  &  \\ 
+  EAS\_CHB &  &  & 1 &  &  &  &  & 408 & 11 &  &  &  \\ 
+  EAS\_CHS &  &  &  &  &  &  &  & 350 & 6 &  &  &  \\ 
+  EAS\_JPT &  &  &  &  &  &  &  & 2 & 24 &  &  &  \\ 
+  EAS\_KHV &  &  &  &  &  &  &  & 3 & 16 &  &  &  \\ 
+   \hline
+EUR\_CEU & 293299 & 5483 & 327 & 4486 &  &  &  & 1 &  &  &  &  \\ 
+  EUR\_FIN & 2 &  &  & 116 &  &  &  &  &  &  &  &  \\ 
+  EUR\_GBR & 91862 & 4881 & 99 & 765 &  &  &  &  &  &  & 1 &  \\ 
+  EUR\_IBS & 32 &  & 4 & 481 &  &  &  &  &  &  &  &  \\ 
+  EUR\_TSI & 20 &  & 1 & 166 &  &  &  &  &  &  &  &  \\ 
+   \hline
+SAS\_BEB &  &  &  &  & 12 &  & 50 &  &  &  &  &  \\ 
+  SAS\_GIH &  &  &  &  & 302 &  &  &  &  &  &  &  \\ 
+  SAS\_ITU & 1 &  &  &  & 307 & 3 &  &  & 251 & 3 &  &  \\ 
+  SAS\_PJL &  &  &  &  & 1452 & 712 &  &  & 82 & 1 &  &  \\ 
+  SAS\_STU &  &  &  &  & 42 &  &  &  & 172 &  &  &  \\ 
+   \hline
+\end{tabular}
+\end{table}
+
+\noindent[OKAY TO CLASSIFY SOME OTHER WHITE AS CENTRAL/SOUTH AMERICANS?]
+ 
+\noindent[INCLUDE RESULTS FOR SIMPLE PROJ? -> HIST PVAL BAD -> 38\% NOT MATCHED, ESP PAKISTANI] 
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Discussion}
 
-[LIMITATION: RUN MULTIPLE TIMES / FAIL TO SPEED UP]
+\noindent[LIMITATION: RUN MULTIPLE TIMES / FAIL TO SPEED UP]
 
 \noindent[LIMITATION 2: FAIL TO PROJECT RELATED INDIVIDUALS WITH OADP.]
 
@@ -255,6 +322,8 @@ As $U^T U = I$, we note that $(U \Delta)^T \widetilde{U} = \Delta V_2[1{:}K,~]$ 
 
 \clearpage
 
+\subsection*{Supplementary figures}
+
 \vspace*{1em}
 
 \begin{figure}[!htpb]
@@ -295,25 +364,11 @@ Blue points are the 488,371 individuals from the UK Biobank, projected using the
 
 \vspace*{1em}
 
-% latex table generated in R 3.5.2 by xtable 1.8-4 package
-% Wed Jun 19 15:19:38 2019
-\begin{table}[!htpb]
-\caption{\label{tab:AUC-simu2}}
-\vspace*{0.5em}
-\centering
-\begin{tabular}{|l|c|c|c|c|}
-\hline
-Scenario & stdCT & maxCT & SCT & lassosum \\ 
-\hline
-100  & 77.4 [76.0-78.8] & 83.9 [83.4-84.4] & 83.1 [82.6-83.6] & 80.1 [79.5-80.8] \\ 
-10K  & 69.4 [68.4-70.5] & 73.0 [72.5-73.4] & 72.9 [72.5-73.3] & 71.2 [70.6-71.7] \\ 
-1M   & 64.0 [63.6-64.4] & 64.0 [63.6-64.4] & 62.7 [62.3-63.0] & 64.1 [63.3-64.8] \\ 
-2chr & 70.0 [68.8-71.2] & 74.4 [73.6-75.2] & 78.5 [77.9-79.1] & 73.2 [72.5-73.8] \\ 
-err  & 67.0 [66.0-68.1] & 68.6 [67.7-69.5] & 69.5 [68.9-70.1] & 65.6 [64.9-66.3] \\ 
-HLA  & 74.8 [72.9-76.3] & 75.3 [73.5-76.9] & 76.4 [74.5-78.0] & 75.8 [74.2-77.2] \\ 
-\hline
-\end{tabular}
-\end{table}
+\begin{figure}[!htpb]
+\centerline{\includegraphics[width=0.8\textwidth]{hist-pval-max.pdf}}
+\caption{Maximum p-values based on robust Mahalabonis distances of UK Biobank individuals from each of the 26 1000G populations.
+\label{fig:ancestry-pval}}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
