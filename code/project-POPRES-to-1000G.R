@@ -36,7 +36,6 @@ plot_grid(plotlist = lapply(1:8, function(k) {
   )
 }), nrow = 4)
 
-# ggsave("figures/proj1000G-Celiac.png", width = 11, height = 7)
 
 #### Ancestry estimation ####
 
@@ -72,7 +71,6 @@ ggplot() +
   theme_bigstatsr() +
   labs(x = "Maximum p-value testing population belonging")
 
-# ggsave("figures/hist-pval-max.pdf", width = 8.5, height = 5.5)
 
 pop <- obj.bed$fam$family.ID
 pop2 <- dplyr::case_when(

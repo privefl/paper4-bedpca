@@ -124,7 +124,7 @@ When there is no missing value, we compute the partial Singular Value Decomposit
 When there is some missing values, we compute the partial SVD similarly, except that missing values are replaced by the variant means (i.e.\ $G_{i,j} - 2 \hat{f_j} = 0$ when $G_{i,j}$ is missing) and  the $\hat{f_j}$ for each variant are estimated using only non missing values of each variant.
 Note that this decomposition is equivalent to the decomposition presented above after imputation by the variant means [SURE?].
 
-\subsection{Robust Mahalanobis distance\label{maha}}
+\subsection{Robust Mahalanobis distance \label{maha}}
 
 In this paper, for many applications, we use the pairwise orthogonalized Gnanadesikan-Kettenrin robust Mahalanobis distance as implemented in function \texttt{covRob} of R package robust with parameter \texttt{estim = "pairwiseGK"} \cite[]{gnanadesikan1972robust,yohai1988high,maronna2002robust,todorov2009object}. We reexport this function in R package bigutilsr for convenience.
 
@@ -162,13 +162,13 @@ Resulting PLINK files and R code to generate these files are available at \url{h
 To easily download these data, we provide a function called \texttt{download\_1000G} in R package bigsnpr.
 
 
-\subsection{Projecting PCs from a reference dataset\label{proj}}
+\subsection{Projecting PCs from a reference dataset \label{proj}}
 
 %[SEPARATE STEPS?]
 
 To project PCs of a reference dataset (e.g.\ 1000G) to a target genotype dataset, we implement the following 3 steps in function \texttt{bed\_projectPCA} of package bigsnpr: 1) matching the variants of each dataset, including removing ambiguous alleles [A/T] and [C/G], and matching strand and direction of the alleles; 2) computing PCA of the reference dataset using the matched variants only; 3) projecting computed PCs to the target data using an optimised implementation (see Supplementary Materials) of the Online Augmentation, Decomposition, and Procrustes (OADP) transformation \cite[]{zhang2019fast}.
 
-\subsection{Ancestry estimation\label{ancestry}}
+\subsection{Ancestry matching \label{ancestry}}
 
 We use the 1000 Genomes (1000G) Project data (section \ref{1000G}) to infer the ancestry of individuals from a study dataset following the following steps: 1) we compute the robust center and covariance parameters of the Mahalanobis distance (section \ref{maha}) for each of the 26 populations of the 10000G data; 2) we project individuals from the study dataset onto the PCA space computed using the 1000G data (section \ref{proj}); 3) we compute the Mahalanobis distance for each projected individual of the study data and each population of the 1000G data (using the center and covariance parameters computed previously); 4) we derive p-values from those distances, as they are approximately chi-squared distributed with the number of PCs used for computing the distances as degrees of freedom; 5) we affect each individual to the largest corresponding p-value (smallest distance), but discard individuals whose maximum p-value is less than 0.05 (i.e.\ individuals far from every population of the 1000G data). 
 
@@ -195,19 +195,19 @@ Blue points are the 40\% remaining individuals, projected using the Online Augme
 \label{fig:proj1000G}}
 \end{figure}
 
-\subsection{Ancestry estimation}
+\subsection{Ancestry matching}
 
-[REDO WITH OUTLIER REMOVAL]
+[REDO WITH OUTLIER REMOVAL?]
 
 We performed ancestry estimation of the individuals in the UK Biobank using the 1000G data (Section \ref{ancestry}), discarding individuals with unknown ancestry or mixed ancestry. 
 We did not infer ancestry for 15.5\% of UK Biobank that had a maximum p-value smaller than 0.05 (Figure \ref{fig:ancestry-pval}). 
 More precisely, among ``White'', ``British'' and ``Irish'' ancestries, this represented respectively 20.4\%, 10.5\% and 19.8\%, while this represented between 48.5\% (``Chinese'') and 81.4\% (``Bangladeshi''). 
-In other words, most of the UK Biobank individual who self reports as ``Bangladeshi'' could not be attributed to any 1000G population, although 1000G data includes some ``Bengali in Bangladesh'' population.
-Only 10 people out of 401,048 were wrongly classified in super population of the 1000G; e.g.\ one Chinese was classified as European by our method (Table \ref{tab:ancestry-pred}). 
-Our method is able to accurately differentiate between sub-continental populations such as differentiating between Pakistani, Bangladeshi and Chinese people (Table \ref{tab:ancestry-pred}).
+In other words, most of the UK Biobank individual who self-reports as ``Bangladeshi'' could not be attributed to any 1000G population, although 1000G data includes several ``Bengali in Bangladesh'' (SAS\_BEB).
+Only 10 people out of 401,048 were wrongly classified in ``super'' population of the 1000G; e.g.\ one Chinese person was classified as European by our method (Table \ref{tab:ancestry-pred}). 
+Moreover, our method is able to accurately differentiate between sub-continental populations such as differentiating between Pakistani, Bangladeshi and Chinese people (Table \ref{tab:ancestry-pred}).
 
 % latex table generated in R 3.6.0 by xtable 1.8-4 package
-% Thu Oct 17 13:58:41 2019
+% Sat Oct 19 09:45:04 2019
 \begin{table}[ht]
 \centering
 \caption{Self-reported ancestry (top) of UKBB individuals and their matching to 1000G populations (left) by our method. See the description of 1000G populations at \url{https://www.internationalgenome.org/category/population/}.} 
@@ -216,36 +216,35 @@ Our method is able to accurately differentiate between sub-continental populatio
   \hline
  & British & Irish & White & Other White & Indian & Pakistani & Bangladeshi & Chinese & Other Asian & Caribbean & African & Other Black \\ 
   \hline
-AFR\_ACB &  &  &  &  &  &  &  &  &  & 1635 & 510 & 27 \\ 
-  AFR\_ASW &  &  &  &  &  &  &  &  &  & 488 & 23 & 14 \\ 
+AFR\_ACB &  &  &  &  &  &  &  &  &  & 1687 & 580 & 28 \\ 
+  AFR\_ASW &  &  &  &  &  &  &  &  &  & 365 & 12 & 12 \\ 
   AFR\_ESN &  &  &  &  &  &  &  &  &  &  & 103 &  \\ 
-  AFR\_GWD &  &  &  &  &  &  &  &  &  &  & 15 &  \\ 
-  AFR\_LWK &  &  &  &  &  &  &  &  &  &  & 38 &  \\ 
-  AFR\_MSL &  &  &  &  &  &  &  &  &  &  & 25 &  \\ 
-  AFR\_YRI &  &  &  &  &  &  &  &  &  & 4 & 433 & 4 \\ 
+  AFR\_GWD &  &  &  &  &  &  &  &  &  &  & 12 &  \\ 
+  AFR\_LWK &  &  &  &  &  &  &  &  &  &  & 33 &  \\ 
+  AFR\_MSL &  &  &  &  &  &  &  &  &  &  & 23 &  \\ 
+  AFR\_YRI &  &  &  &  &  &  &  &  &  & 4 & 403 & 3 \\ 
    \hline
-AMR\_CLM & 1 &  &  & 53 &  &  &  &  &  &  &  &  \\ 
+AMR\_CLM & 1 &  &  & 47 &  &  &  &  &  &  &  &  \\ 
   AMR\_MXL &  &  & 1 & 3 &  &  &  &  &  &  &  &  \\ 
   AMR\_PEL &  &  &  & 1 &  &  &  &  &  &  &  &  \\ 
-  AMR\_PUR &  &  &  &  &  &  &  &  &  &  &  &  \\ 
    \hline
 EAS\_CDX &  &  &  &  &  &  &  & 1 &  &  &  &  \\ 
-  EAS\_CHB &  &  & 1 &  &  &  &  & 408 & 11 &  &  &  \\ 
-  EAS\_CHS &  &  &  &  &  &  &  & 350 & 6 &  &  &  \\ 
-  EAS\_JPT &  &  &  &  &  &  &  & 2 & 24 &  &  &  \\ 
-  EAS\_KHV &  &  &  &  &  &  &  & 3 & 16 &  &  &  \\ 
+  EAS\_CHB & 1 &  &  &  &  &  &  & 369 & 10 &  &  &  \\ 
+  EAS\_CHS &  &  &  &  &  &  &  & 398 & 8 &  &  &  \\ 
+  EAS\_JPT &  &  &  &  &  &  &  & 2 & 23 &  &  &  \\ 
+  EAS\_KHV &  &  &  &  &  &  &  & 3 & 14 &  &  &  \\ 
    \hline
-EUR\_CEU & 293299 & 5483 & 327 & 4486 &  &  &  & 1 &  &  &  &  \\ 
-  EUR\_FIN & 2 &  &  & 116 &  &  &  &  &  &  &  &  \\ 
-  EUR\_GBR & 91862 & 4881 & 99 & 765 &  &  &  &  &  &  & 1 &  \\ 
-  EUR\_IBS & 32 &  & 4 & 481 &  &  &  &  &  &  &  &  \\ 
-  EUR\_TSI & 20 &  & 1 & 166 &  &  &  &  &  &  &  &  \\ 
+EUR\_CEU & 323808 & 6547 & 348 & 4904 &  &  &  & 1 &  &  &  &  \\ 
+  EUR\_FIN & 3 &  &  & 115 &  &  &  &  &  &  &  &  \\ 
+  EUR\_GBR & 62059 & 3682 & 79 & 482 &  &  &  &  &  &  & 1 &  \\ 
+  EUR\_IBS & 35 &  & 5 & 494 &  &  &  &  &  &  &  &  \\ 
+  EUR\_TSI & 20 &  & 1 & 156 &  &  &  &  &  &  &  &  \\ 
    \hline
-SAS\_BEB &  &  &  &  & 12 &  & 50 &  &  &  &  &  \\ 
-  SAS\_GIH &  &  &  &  & 302 &  &  &  &  &  &  &  \\ 
-  SAS\_ITU & 1 &  &  &  & 307 & 3 &  &  & 251 & 3 &  &  \\ 
-  SAS\_PJL &  &  &  &  & 1452 & 712 &  &  & 82 & 1 &  &  \\ 
-  SAS\_STU &  &  &  &  & 42 &  &  &  & 172 &  &  &  \\ 
+SAS\_BEB &  &  &  &  & 10 &  & 41 &  &  &  &  &  \\ 
+  SAS\_GIH &  &  &  &  & 292 &  &  &  &  &  &  &  \\ 
+  SAS\_ITU & 1 &  &  &  & 270 & 1 &  &  & 224 & 2 &  &  \\ 
+  SAS\_PJL &  &  &  &  & 1406 & 641 &  &  & 82 & 2 &  &  \\ 
+  SAS\_STU &  &  &  &  & 39 &  &  &  & 198 &  &  &  \\ 
    \hline
 \end{tabular}
 \end{table}
@@ -254,6 +253,15 @@ SAS\_BEB &  &  &  &  & 12 &  & 50 &  &  &  &  &  \\
  
 \noindent[INCLUDE RESULTS FOR SIMPLE PROJ? -> HIST PVAL BAD -> 38\% NOT MATCHED, ESP PAKISTANI] 
 
+We also projected individuals using the OADP projection and then applied our ancestry detection technique to other datasets. 
+When applied to the European individuals of the POPRES data \cite[]{nelson2008population}, we show that 56.5\% of individuals could not be matched to one of the 26 populations of the 1000G data (Table \ref{tab:ancestry-pred-popres}). 
+This is particularly dramatic for all East-Europeans, whose only 11 people could be matched out of 179 (6.1\%).
+Moreover, even though 1000G data include several ``Toscani in Italia'' (EUR\_TSI), we were able to match 14.2\% of Italians only.
+Nevertheless, for individuals that we could match, they were all identified as European ancestry. We could also identify accurately sub-regions of Europe; e.g.\ all Spanish and Portugese individuals that we could match (73.1\%) were identified as ``Iberian Population in Spain'' (EUR\_IBS, Table \ref{tab:ancestry-pred-popres}).
+Finally, we also projected and matched people from a case-control cohort for celiac disease composed of four European countries: Italy, the Netherlands, the UK and Finland \cite[]{dubois2010multiple}. 
+Among UK individuals, 5397 (79.9\%) were matched to either ``Utah Residents with Northern and Western European Ancestry'' (EUR\_CEU) or ``British in England and Scotland'' (EUR\_GBR), 10 (0.2\%) to other European populations, 1 to ``Mexican Ancestry from Los Angeles USA'' (AMR\_MXL) and 1346 (19.9\%) could not be matched (Table \ref{tab:ancestry-pred-celiac}).
+Among Finns, 1543 (62.4\%) were matched to ``Finnish in Finland'' (EUR\_FIN), 6 (0.3\%) to other European populations, and 922 (37.3\%) could not be matched.
+Among Italians, 229 (22\%) were matched to EUR\_TSI, 15 (1.5\%) to EUR\_IBS and 795 (76.5\%) could not be matched (Table \ref{tab:ancestry-pred-celiac}).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 

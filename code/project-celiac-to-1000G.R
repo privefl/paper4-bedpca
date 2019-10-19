@@ -38,6 +38,7 @@ plot_grid(plotlist = lapply(1:8, function(k) {
 
 # ggsave("figures/proj1000G-Celiac.png", width = 11, height = 7)
 
+
 #### Ancestry estimation ####
 
 fam2 <- bigreadr::fread2("tmp-data/1000G_phase3_common_norel.fam2")
@@ -71,8 +72,6 @@ ggplot() +
   geom_vline(xintercept = 0.05, color = "red") +
   theme_bigstatsr() +
   labs(x = "Maximum p-value testing population belonging")
-
-# ggsave("figures/hist-pval-max.pdf", width = 8.5, height = 5.5)
 
 
 # Get population from external files
