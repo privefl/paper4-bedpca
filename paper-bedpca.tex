@@ -201,52 +201,54 @@ Blue points are the 40\% remaining individuals, projected using the Online Augme
 
 We performed ancestry estimation of the individuals in the UK Biobank using the 1000G data (Section \ref{ancestry}), discarding individuals with unknown ancestry or mixed ancestry. 
 We did not infer ancestry for 15.5\% of UK Biobank that had a maximum p-value smaller than 0.05 (Figure \ref{fig:ancestry-pval}). 
-More precisely, among ``White'', ``British'' and ``Irish'' ancestries, this represented respectively 20.4\%, 10.5\% and 19.8\%, while this represented between 48.5\% (``Chinese'') and 81.4\% (``Bangladeshi''). 
+More precisely, among ``White'', ``British'' and ``Irish'' ancestries, this represented respectively 20.4\%, 10.5\% and 19.8\%, while this represented between 48.5\% (``Chinese'') and 81.4\% (``Bangladeshi'') for other populations. 
 In other words, most of the UK Biobank individual who self-reports as ``Bangladeshi'' could not be attributed to any 1000G population, although 1000G data includes several ``Bengali in Bangladesh'' (SAS\_BEB).
 Only 10 people out of 401,048 were wrongly classified in ``super'' population of the 1000G; e.g.\ one Chinese person was classified as European by our method (Table \ref{tab:ancestry-pred}). 
 Moreover, our method is able to accurately differentiate between sub-continental populations such as differentiating between Pakistani, Bangladeshi and Chinese people (Table \ref{tab:ancestry-pred}).
 
 % latex table generated in R 3.6.0 by xtable 1.8-4 package
-% Sat Oct 19 09:45:04 2019
+% Sat Oct 19 22:53:58 2019
 \begin{table}[ht]
 \centering
 \caption{Self-reported ancestry (top) of UKBB individuals and their matching to 1000G populations (left) by our method. See the description of 1000G populations at \url{https://www.internationalgenome.org/category/population/}.} 
 \label{tab:ancestry-pred}
-\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|c|}
+\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|c|c|}
   \hline
- & British & Irish & White & Other White & Indian & Pakistani & Bangladeshi & Chinese & Other Asian & Caribbean & African & Other Black \\ 
+ & British & Irish & White & Other White & Indian & Pakistani & Bangladeshi & Chinese & Other Asian & Caribbean & African & Other Black & NA \\ 
   \hline
-AFR\_ACB &  &  &  &  &  &  &  &  &  & 1687 & 580 & 28 \\ 
-  AFR\_ASW &  &  &  &  &  &  &  &  &  & 365 & 12 & 12 \\ 
-  AFR\_ESN &  &  &  &  &  &  &  &  &  &  & 103 &  \\ 
-  AFR\_GWD &  &  &  &  &  &  &  &  &  &  & 12 &  \\ 
-  AFR\_LWK &  &  &  &  &  &  &  &  &  &  & 33 &  \\ 
-  AFR\_MSL &  &  &  &  &  &  &  &  &  &  & 23 &  \\ 
-  AFR\_YRI &  &  &  &  &  &  &  &  &  & 4 & 403 & 3 \\ 
+AFR\_ACB &  &  &  &  &  &  &  &  &  & 1687 & 580 & 28 & 252 \\ 
+  AFR\_ASW &  &  &  &  &  &  &  &  &  & 365 & 12 & 12 & 41 \\ 
+  AFR\_ESN &  &  &  &  &  &  &  &  &  &  & 103 &  & 16 \\ 
+  AFR\_GWD &  &  &  &  &  &  &  &  &  &  & 12 &  & 5 \\ 
+  AFR\_LWK &  &  &  &  &  &  &  &  &  &  & 33 &  & 6 \\ 
+  AFR\_MSL &  &  &  &  &  &  &  &  &  &  & 23 &  & 2 \\ 
+  AFR\_YRI &  &  &  &  &  &  &  &  &  & 4 & 403 & 3 & 66 \\ 
    \hline
-AMR\_CLM & 1 &  &  & 47 &  &  &  &  &  &  &  &  \\ 
-  AMR\_MXL &  &  & 1 & 3 &  &  &  &  &  &  &  &  \\ 
-  AMR\_PEL &  &  &  & 1 &  &  &  &  &  &  &  &  \\ 
+AMR\_CLM & 1 &  &  & 47 &  &  &  &  &  &  &  &  & 127 \\ 
+  AMR\_MXL &  &  & 1 & 3 &  &  &  &  &  &  &  &  & 21 \\ 
+  AMR\_PEL &  &  &  & 1 &  &  &  &  &  &  &  &  & 14 \\ 
    \hline
-EAS\_CDX &  &  &  &  &  &  &  & 1 &  &  &  &  \\ 
-  EAS\_CHB & 1 &  &  &  &  &  &  & 369 & 10 &  &  &  \\ 
-  EAS\_CHS &  &  &  &  &  &  &  & 398 & 8 &  &  &  \\ 
-  EAS\_JPT &  &  &  &  &  &  &  & 2 & 23 &  &  &  \\ 
-  EAS\_KHV &  &  &  &  &  &  &  & 3 & 14 &  &  &  \\ 
+EAS\_CDX &  &  &  &  &  &  &  & 1 &  &  &  &  &  \\ 
+  EAS\_CHB & 1 &  &  &  &  &  &  & 369 & 10 &  &  &  & 9 \\ 
+  EAS\_CHS &  &  &  &  &  &  &  & 398 & 8 &  &  &  & 18 \\ 
+  EAS\_JPT &  &  &  &  &  &  &  & 2 & 23 &  &  &  & 114 \\ 
+  EAS\_KHV &  &  &  &  &  &  &  & 3 & 14 &  &  &  & 19 \\ 
    \hline
-EUR\_CEU & 323808 & 6547 & 348 & 4904 &  &  &  & 1 &  &  &  &  \\ 
-  EUR\_FIN & 3 &  &  & 115 &  &  &  &  &  &  &  &  \\ 
-  EUR\_GBR & 62059 & 3682 & 79 & 482 &  &  &  &  &  &  & 1 &  \\ 
-  EUR\_IBS & 35 &  & 5 & 494 &  &  &  &  &  &  &  &  \\ 
-  EUR\_TSI & 20 &  & 1 & 156 &  &  &  &  &  &  &  &  \\ 
+EUR\_CEU & 323808 & 6547 & 348 & 4904 &  &  &  & 1 &  &  &  &  & 1358 \\ 
+  EUR\_FIN & 3 &  &  & 115 &  &  &  &  &  &  &  &  & 1 \\ 
+  EUR\_GBR & 62059 & 3682 & 79 & 482 &  &  &  &  &  &  & 1 &  & 268 \\ 
+  EUR\_IBS & 35 &  & 5 & 494 &  &  &  &  &  &  &  &  & 10 \\ 
+  EUR\_TSI & 20 &  & 1 & 156 &  &  &  &  &  &  &  &  & 3 \\ 
    \hline
-SAS\_BEB &  &  &  &  & 10 &  & 41 &  &  &  &  &  \\ 
-  SAS\_GIH &  &  &  &  & 292 &  &  &  &  &  &  &  \\ 
-  SAS\_ITU & 1 &  &  &  & 270 & 1 &  &  & 224 & 2 &  &  \\ 
-  SAS\_PJL &  &  &  &  & 1406 & 641 &  &  & 82 & 2 &  &  \\ 
-  SAS\_STU &  &  &  &  & 39 &  &  &  & 198 &  &  &  \\ 
+SAS\_BEB &  &  &  &  & 10 &  & 41 &  &  &  &  &  & 4 \\ 
+  SAS\_GIH &  &  &  &  & 292 &  &  &  &  &  &  &  & 3 \\ 
+  SAS\_ITU & 1 &  &  &  & 270 & 1 &  &  & 224 & 2 &  &  & 69 \\ 
+  SAS\_PJL &  &  &  &  & 1406 & 641 &  &  & 82 & 2 &  &  & 147 \\ 
+  SAS\_STU &  &  &  &  & 39 &  &  &  & 198 &  &  &  & 47 \\ 
    \hline
-\end{tabular}
+NA & 45101 & 2526 & 111 & 9614 & 3699 & 1106 & 180 & 730 & 1188 & 2237 & 2037 & 75 & 7051 \\ 
+   \hline
+  \end{tabular}
 \end{table}
 
 \noindent[OKAY TO CLASSIFY SOME OTHER WHITE AS CENTRAL/SOUTH AMERICANS?]
