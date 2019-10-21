@@ -188,11 +188,32 @@ knitr::include_graphics("figures/proj1000G-related.svg")
 
 Method: Robust Mahalanobis distances by reference population.
 
-```{r}
-
+```{r, out.width="70%"}
+knitr::include_graphics("figures/us.svg")
 ```
 
+---
 
+## Ancestry matching
+
+Matching POPRES populations to 1000G populations    
+(do not match maximum p-values < 0.05):
+
+
+```{r, out.width="90%"}
+knitr::include_graphics("figures/ancestry-popres.png")
+```
+
+---
+
+## Ancestry matching
+
+Matching UKBB populations to 1000G populations (20 minutes)  
+(do not match maximum p-values < 0.05):
+
+```{r, out.width="98%"}
+knitr::include_graphics("figures/ancestry-UKBB.png")
+```
 
 ---
 
