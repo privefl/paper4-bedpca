@@ -90,7 +90,7 @@
 \abstract{
 Principal Component Analysis (PCA) of genetic data is routinely used to infer ancestry and control for population structure in various genetic analyses. However, conducting PCA in large populations is complicated, and there are several potential pitfalls. These pitfalls include (1) capturing Linkage Disequilibrium (LD) structure instead of population structure, (2) projected PCs that suffer from shrinkage bias when projecting PCA from a reference dataset to another independent dataset, and (3) detecting sample outliers. In this work, we explore these pitfalls of using PCA, and present efficient solutions to these pitfalls. Following applications to diverse datasets, we make recommendations for best practices and implement the proposed solutions in an efficient and user-friendly toolkit for performing these analyses in the R packages bigsnpr and bigutilsr.
 
-For example, we show that PC18 to PC40 in the UK Biobank are capturing LD structure. Using our automatic algorithm for removing long-range LD region, we are able to recover only 17 PCs that capture population structure only. Therefore, we recommend using only 17 PCs from the UK Biobank. Another example: when projecting the PCA computed on the 1000 Genomes project, although PC1 to PC4 suffer from only moderate shrinkage (1.00-1.08), PC5 for example suffers from a shrinkage factor of 1.51 and PC10 from a shrinkage factor of 3.16. We provide a fast way to project new individuals that is mostly free of this shrinkage bias. We also show how to restrict to individuals that are genetically homogeneous based on PCA. 
+For example, we show that PC18 to PC40 in the UK Biobank are capturing LD structure. Using our automatic algorithm for removing long-range LD region, we are able to recover only 17 PCs that capture population structure only. Therefore, we recommend using only 17 PCs from the UK Biobank. Another example: when projecting the PCA computed on the 1000 Genomes project, although PC1 to PC4 suffer from only moderate shrinkage (1.00-1.08), PC5 for example suffers from a shrinkage factor of 1.51 and PC10 from a shrinkage factor of 3.16. We provide a fast way to project new individuals and that is not affected by this shrinkage bias. We also show how to restrict to individuals that are genetically homogeneous based on PCA. 
 
 Overall, we believe this work would be of interest for anyone using PCA in their analyses of genetic data.
 }
@@ -126,19 +126,23 @@ Note that this decomposition is equivalent to the decomposition presented above 
 
 \subsection{Robust Mahalanobis distance \label{maha}}
 
-In this paper, for many applications, we use the pairwise orthogonalized Gnanadesikan-Kettenrin robust Mahalanobis distance as implemented in function \texttt{covRob} of R package robust with parameter \texttt{estim = "pairwiseGK"} \cite[]{gnanadesikan1972robust,yohai1988high,maronna2002robust,todorov2009object}. We reexport this function in R package bigutilsr for convenience.
+In this paper, for many applications, we use the pairwise orthogonalized Gnanadesikan-Kettenrin robust Mahalanobis distance as implemented in function \texttt{covRob} of R package robust with parameter \texttt{estim = "pairwiseGK"} \cite[]{gnanadesikan1972robust,yohai1988high,maronna2002robust,todorov2009object}. We reexport function \texttt{covRob} in R package bigutilsr for convenience.
 
 \subsection{Detecting LD structure in PCA}
 
-For detecting outlier variants in PCA that are due to long-range Linkage Disequilibrium (LD) regions, we use a slightly modified version of the procedure described by \cite{prive2017efficient}. 
-To summarise the contribution of each variant in all PC loadings, we compute the robust Mahalanobis distances (Section \ref{maha}) of PC loadings.  
-This captures both population-differentiating variants as well as long-range LD regions. 
-Then, to capture consecutive outliers that corresponds to long-range LD regions, we apply a Gaussian smoothing to these statistics.
+For detecting outlier variants in PCA that are due to long-range Linkage Disequilibrium (LD) regions, we use a slightly modified version of the procedure described by \cite{prive2017efficient}.
+We first apply a first round of clumping, prioritising variants by higher minor allele count, at e.g.\ $r^2$ > 0.2.
+Then, we compute $K$ PC scores and loadings.
+To summarise the contribution of each variant in all $K$ PC loadings, we compute the robust Mahalanobis distances (Section \ref{maha}) of these PC loadings.  
+This captures both population-differentiating variants as well as long-range LD regions; to capture consecutive outliers that corresponds to long-range LD regions, we apply a Gaussian smoothing to these statistics.
 
 Finally, to choose the threshold of outlierness based on the previously described statistics, we use a modified version of Tukey's rule, a standard rule for detecting outliers \cite[]{tukey77}. 
 The standard upper limit defined by Tukey's rule is $q_{75\%}(x) + 1.5 \cdot IQR(x)$, where $x$ is the vector of computed statistics and $IQR(x) = q_{75\%}(x) - q_{25\%}(x)$ is the interquartile range.
 However, there are two pitfalls when using Tukey's rule. First, Tukey's rule assumes a normally distributed sample. For example, when the data is skewed, it does not work that well. We account for skewness using the medcouple \cite[]{hubert2008adjusted}. Standard Tukey's rule also uses a fixed coefficient (1.5) that does not account for multiple testing, which means that for large samples, there are always some outliers detected when using 1.5. 
 To solve these two issues, we implement \texttt{tukey\_mc\_up} in R package bigutilsr and use it here, which accounts both for skewness and multiple testing by default.
+
+We remove the detected outlier variants, compute the PC scores and loadings again, and iterate until there is no detected outlier variant anymore.
+This procedure is implemented in function \texttt{bed\_autoSVD} or R package bigsnpr.
 
 \subsection{Detecting outlier samples in PCA}
 
@@ -176,6 +180,22 @@ We use the 1000 Genomes (1000G) Project data (section \ref{1000G}) to infer the 
 
 \section{Results}
 
+\noindent[TODO SECTION ON SAMPLE OUTLIER REMOVAL]
+
+\noindent[TALK ABOUT EFFECT OF MISSING VALUES ON PCA?]
+
+\noindent[TALK ABOUT REMOVING OF LRLDR?]
+
+\subsection{Performance}
+
+To show that we provide very performant implementations of the different methods presented in this paper, we apply them to the UK Biobank. We use 20 physical cores for most of the computations.
+It takes 22 minutes to perform a first phase of clumping on 488,371 individuals genotyped over 504,139 variants, which reduces the number of variants to 261,307. It then takes 34 minutes to compute the first 20 PCs using these 261,307 variants.
+If performing the automatic procedure for LD detection, it takes 5 hours to perform the initial clumping step, 6 computation of PCs and 5 outlier variant detection (i.e.\ 5 iterations of outlier detection and one final computation of PCs).
+
+It takes 8 minutes to match the 1000G data to the UKBB data and compute 20 PCs of the 1000G data using the automatic outlier detection technique. It takes 12 minutes more to do the OADP projection of all 488,371 individuals of the UKBB data to the PCA computed using the 1000G data. Once projections are available, et takes only a couple minutes to perform the ancestry estimation.
+
+[TALK ABOUT KNN]
+
 \subsection{Projecting PCs from a reference dataset}
 
 We use 60\% of individuals in the 1000G data (section \ref{1000G}) to compute the PCA ($K=20$ PCs). Then, we project the remaining 40\% individuals using three methods: 1/ simply multiplying the genotypes of these individuals by the previously computed loadings, 2/ correcting the simple projections using asymptotic shrinkage factors as determined by R package hdpca v1.0.0 \cite[]{dey2019asymptotic} and 3/ the OADP projection (section \ref{proj}). 
@@ -199,15 +219,16 @@ Blue points are the 40\% remaining individuals, projected using the Online Augme
 
 [REDO WITH OUTLIER REMOVAL?]
 
-We performed ancestry estimation of the individuals in the UK Biobank using the 1000G data (Section \ref{ancestry}), discarding individuals with unknown ancestry or mixed ancestry. 
-We did not infer ancestry for 15.5\% of UK Biobank that had a maximum p-value smaller than 0.05 (Figure \ref{fig:ancestry-pval}). 
-More precisely, among ``White'', ``British'' and ``Irish'' ancestries, this represented respectively 20.4\%, 10.5\% and 19.8\%, while this represented between 48.5\% (``Chinese'') and 81.4\% (``Bangladeshi'') for other populations. 
-In other words, most of the UK Biobank individual who self-reports as ``Bangladeshi'' could not be attributed to any 1000G population, although 1000G data includes several ``Bengali in Bangladesh'' (SAS\_BEB).
+We performed ancestry estimation of the individuals in the UK Biobank using the 1000G data (Section \ref{ancestry}), discarding individuals with unknown ancestry or mixed ancestry.
+We used from PC1 to PC14 and PC16 based on visual inspection of PC scores (Figure \ref{fig:PC-1000G-UKBB}).
+We did not infer ancestry for 15.9\% of UK Biobank that had a maximum p-value smaller than 0.05 (Figure \ref{fig:ancestry-pval}). 
+More precisely, among ``White'', ``British'' and ``Irish'' ancestries, this represented respectively 20.2\%, 11.1\% and 20.3\%, while this represented between 44.5\% (``Chinese'') and 74.3\% (``Bangladeshi'') for other populations. 
+In other words, 3 out of 4 of the UK Biobank individual who self-reports as ``Bangladeshi'' could not be attributed to any 1000G population, although 1000G data includes several ``Bengali in Bangladesh'' (SAS\_BEB).
 Only 10 people out of 401,048 were wrongly classified in ``super'' population of the 1000G; e.g.\ one Chinese person was classified as European by our method (Table \ref{tab:ancestry-pred}). 
 Moreover, our method is able to accurately differentiate between sub-continental populations such as differentiating between Pakistani, Bangladeshi and Chinese people (Table \ref{tab:ancestry-pred}).
 
 % latex table generated in R 3.6.0 by xtable 1.8-4 package
-% Sat Oct 19 22:53:58 2019
+% Mon Oct 21 15:14:34 2019
 \begin{table}[ht]
 \centering
 \caption{Self-reported ancestry (top) of UKBB individuals and their matching to 1000G populations (left) by our method. See the description of 1000G populations at \url{https://www.internationalgenome.org/category/population/}.} 
@@ -216,39 +237,39 @@ Moreover, our method is able to accurately differentiate between sub-continental
   \hline
  & British & Irish & White & Other White & Indian & Pakistani & Bangladeshi & Chinese & Other Asian & Caribbean & African & Other Black & NA \\ 
   \hline
-AFR\_ACB &  &  &  &  &  &  &  &  &  & 1687 & 580 & 28 & 252 \\ 
-  AFR\_ASW &  &  &  &  &  &  &  &  &  & 365 & 12 & 12 & 41 \\ 
-  AFR\_ESN &  &  &  &  &  &  &  &  &  &  & 103 &  & 16 \\ 
-  AFR\_GWD &  &  &  &  &  &  &  &  &  &  & 12 &  & 5 \\ 
-  AFR\_LWK &  &  &  &  &  &  &  &  &  &  & 33 &  & 6 \\ 
-  AFR\_MSL &  &  &  &  &  &  &  &  &  &  & 23 &  & 2 \\ 
-  AFR\_YRI &  &  &  &  &  &  &  &  &  & 4 & 403 & 3 & 66 \\ 
+AFR\_ACB &  &  &  &  &  &  &  &  &  & 1832 & 580 & 31 & 259 \\ 
+  AFR\_ASW &  &  &  &  &  &  &  &  &  & 315 & 13 & 10 & 39 \\ 
+  AFR\_ESN &  &  &  &  &  &  &  &  &  &  & 155 & 1 & 29 \\ 
+  AFR\_GWD &  &  &  &  &  &  &  &  &  &  & 20 &  & 4 \\ 
+  AFR\_LWK &  &  &  &  &  &  &  &  &  &  & 34 &  & 4 \\ 
+  AFR\_MSL &  &  &  &  &  &  &  &  &  &  & 26 &  &  \\ 
+  AFR\_YRI &  &  &  &  &  &  &  &  &  & 5 & 469 & 3 & 81 \\ 
    \hline
-AMR\_CLM & 1 &  &  & 47 &  &  &  &  &  &  &  &  & 127 \\ 
-  AMR\_MXL &  &  & 1 & 3 &  &  &  &  &  &  &  &  & 21 \\ 
-  AMR\_PEL &  &  &  & 1 &  &  &  &  &  &  &  &  & 14 \\ 
+AMR\_CLM & 1 &  &  & 50 &  &  &  &  &  &  &  &  & 142 \\ 
+  AMR\_MXL &  &  & 1 & 3 &  &  &  &  &  &  &  &  & 20 \\ 
+  AMR\_PEL &  &  &  & 2 &  &  &  &  &  &  &  &  & 19 \\ 
    \hline
-EAS\_CDX &  &  &  &  &  &  &  & 1 &  &  &  &  &  \\ 
-  EAS\_CHB & 1 &  &  &  &  &  &  & 369 & 10 &  &  &  & 9 \\ 
-  EAS\_CHS &  &  &  &  &  &  &  & 398 & 8 &  &  &  & 18 \\ 
-  EAS\_JPT &  &  &  &  &  &  &  & 2 & 23 &  &  &  & 114 \\ 
-  EAS\_KHV &  &  &  &  &  &  &  & 3 & 14 &  &  &  & 19 \\ 
+EAS\_CDX &  &  &  &  &  &  &  & 2 &  &  &  &  & 1 \\ 
+  EAS\_CHB & 1 &  &  &  &  &  &  & 445 & 10 &  &  &  & 7 \\ 
+  EAS\_CHS &  &  &  &  &  &  &  & 380 & 9 &  &  &  & 21 \\ 
+  EAS\_JPT &  &  &  &  &  &  &  & 3 & 25 &  &  &  & 122 \\ 
+  EAS\_KHV &  &  &  &  &  &  &  & 4 & 16 &  &  &  & 22 \\ 
    \hline
-EUR\_CEU & 323808 & 6547 & 348 & 4904 &  &  &  & 1 &  &  &  &  & 1358 \\ 
-  EUR\_FIN & 3 &  &  & 115 &  &  &  &  &  &  &  &  & 1 \\ 
-  EUR\_GBR & 62059 & 3682 & 79 & 482 &  &  &  &  &  &  & 1 &  & 268 \\ 
-  EUR\_IBS & 35 &  & 5 & 494 &  &  &  &  &  &  &  &  & 10 \\ 
-  EUR\_TSI & 20 &  & 1 & 156 &  &  &  &  &  &  &  &  & 3 \\ 
+EUR\_CEU & 325725 & 6675 & 350 & 4855 &  &  &  & 1 &  &  &  &  & 1363 \\ 
+  EUR\_FIN & 2 &  &  & 118 &  &  &  &  &  &  &  &  & 1 \\ 
+  EUR\_GBR & 57497 & 3486 & 79 & 454 &  &  &  &  &  &  & 1 &  & 244 \\ 
+  EUR\_IBS & 28 &  & 4 & 452 &  &  &  &  &  &  &  &  & 8 \\ 
+  EUR\_TSI & 25 &  & 1 & 177 &  &  &  &  &  &  &  &  & 5 \\ 
    \hline
-SAS\_BEB &  &  &  &  & 10 &  & 41 &  &  &  &  &  & 4 \\ 
-  SAS\_GIH &  &  &  &  & 292 &  &  &  &  &  &  &  & 3 \\ 
-  SAS\_ITU & 1 &  &  &  & 270 & 1 &  &  & 224 & 2 &  &  & 69 \\ 
-  SAS\_PJL &  &  &  &  & 1406 & 641 &  &  & 82 & 2 &  &  & 147 \\ 
-  SAS\_STU &  &  &  &  & 39 &  &  &  & 198 &  &  &  & 47 \\ 
+SAS\_BEB &  &  &  &  & 11 &  & 57 &  &  &  &  &  & 7 \\ 
+  SAS\_GIH &  &  &  &  & 334 &  &  &  & 1 &  &  &  & 4 \\ 
+  SAS\_ITU & 1 &  &  &  & 314 & 1 &  &  & 264 & 3 &  &  & 82 \\ 
+  SAS\_PJL & 1 &  &  &  & 1749 & 767 &  &  & 104 & 2 &  &  & 177 \\ 
+  SAS\_STU &  &  &  &  & 38 &  &  &  & 185 &  &  &  & 40 \\ 
    \hline
-NA & 45101 & 2526 & 111 & 9614 & 3699 & 1106 & 180 & 730 & 1188 & 2237 & 2037 & 75 & 7051 \\ 
+NA & 47748 & 2594 & 110 & 9705 & 3270 & 980 & 164 & 669 & 1133 & 2140 & 1906 & 73 & 6970 \\ 
    \hline
-  \end{tabular}
+\end{tabular}
 \end{table}
 
 \noindent[OKAY TO CLASSIFY SOME OTHER WHITE AS CENTRAL/SOUTH AMERICANS?]
@@ -265,15 +286,19 @@ Among UK individuals, 5397 (79.9\%) were matched to either ``Utah Residents with
 Among Finns, 1543 (62.4\%) were matched to ``Finnish in Finland'' (EUR\_FIN), 6 (0.3\%) to other European populations, and 922 (37.3\%) could not be matched.
 Among Italians, 229 (22\%) were matched to EUR\_TSI, 15 (1.5\%) to EUR\_IBS and 795 (76.5\%) could not be matched (Table \ref{tab:ancestry-pred-celiac}).
 
+
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Discussion}
 
-\noindent[LIMITATION: RUN MULTIPLE TIMES / FAIL TO SPEED UP]
+\noindent[LIMITATION 1: RUN MULTIPLE TIMES / FAIL TO SPEED UP]
 
 \noindent[LIMITATION 2: FAIL TO PROJECT RELATED INDIVIDUALS WITH OADP.]
 
 \noindent[LIMITATION 3: FAIL TO AUTOMATICALLY DETECT OUTLIER SAMPLES.]
+
+\noindent[DISCUSS LACK OF CERTAIN POPULATIONS IN 1000G]
 
 \noindent[DISCUSS ABOUT $K''=K'=K$? FASTER, EASIER, DO NOT WANT MORE DIM?]
 
@@ -370,6 +395,14 @@ Blue points are the same 60\% individuals, projected using the Online Augmentati
 Black points are PC scores of 1000G individuals used for computing PCA.
 Blue points are the 488,371 individuals from the UK Biobank, projected using the Online Augmentation, Decomposition, and Procrustes (OADP) transformation. Note that only 20,000 random individuals are represented in this plot.
 \label{fig:proj1000G-5}}
+\end{figure}
+
+\vspace*{1em}
+
+\begin{figure}[!htpb]
+\centerline{\includegraphics[width=0.8\textwidth]{PC-1000G-UKBB.pdf}}
+\caption{Principal Component (PC) scores 1 to 20 of the 1000 Genomes (1000G) project using variants matched with the UK Biobank. Colors represent populations of the 1000G data.
+\label{fig:PC-1000G-UKBB}}
 \end{figure}
 
 \vspace*{1em}

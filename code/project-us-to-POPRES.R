@@ -3,7 +3,7 @@ library(dplyr)
 library(ggplot2)
 
 bedfiles <-
-  sapply(c("~/Bureau/thesis/backingfiles/genome_Florian_Prive_v5_Full_20190212023418.txt",
+  sapply(c("tmp-data/genome_Florian_Prive_v5_Full_20190212023418.txt",
            "tmp-data/genome_B_V_v5_Full_20191017230843.txt"),
          function(genome) {
            name <- sub("\\.txt$", "", basename(genome))
