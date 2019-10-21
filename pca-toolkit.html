@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+  <head>
+    <title>PCA Toolkit</title>
+    <meta charset="utf-8" />
+    <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
+    <link href="libs/remark-css-0.0.1/default-fonts.css" rel="stylesheet" />
+    <link href="libs/pagedtable-1.1/css/pagedtable.css" rel="stylesheet" />
+    <script src="libs/pagedtable-1.1/js/pagedtable.js"></script>
+    <link href="libs/font-awesome-5.3.1/css/fontawesome-all.min.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+
+
+
+
+class: title-slide center middle inverse
+
+&lt;br&gt;
+
+# Efficient toolkit &lt;br&gt; implementing best practices &lt;br&gt; for principal component analysis &lt;br&gt; of population genetic data
+
+&lt;br&gt;
+
+## Florian Privé
+
+&lt;br&gt;
+
+&lt;br&gt;
+
+**Slides:** `https://privefl.github.io/paper4-bedpca/pca-toolkit.html`
+
+---
+
+## Motivation
+
+&lt;br&gt;
+
+Perform PCA analyses in iPSYCH appropriately and quickly.
+
+&lt;br&gt;
+
+--
+
+&lt;br&gt;
+
+
+## Disclaimer
+
+&lt;br&gt;
+
+Still unfinished work.
+
+---
+
+## Range of analyses
+
+&lt;br&gt;
+
+- Compute PCA on PLINK .bed files (with missing values)
+
+- Perform pruning to reduce effect of Linkage Disequilibrium (LD)
+
+- Further removing of long-range LD regions
+
+- Detection of outlier samples?
+
+- Detection of homogeneous samples -&gt; Danes
+
+- Projection of new individuals onto reference PCA space
+
+- Ancestry matching
+
+---
+
+## Pruning and PCA
+
+&lt;br&gt;
+
+Using 20 physical cores,
+
+- takes 22 minutes to perform a first phase of clumping on 406,545 unrelated individuals genotyped over 504,139 variants, which reduces the number of variants to 261,307. 
+
+- then takes 34 minutes to compute the first 20 PCs using these 261,307 variants.
+
+--
+
+&lt;br&gt;
+
+Method:
+
+- Directly memory-map the bed file (access it as if it were a matrix in memory)
+
+- Same PCA algorithm based on random projections, already used in PCA of R package bigstatsr (Privé et al. 2018) and in FlashPCA2 (Abraham et al. 2017).
+
+---
+
+## Problem of LD: PC reported by UK Biobank
+
+&lt;img src="figures/UKBB-loadings1-40.svg" width="98%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Problem of LD: PC computed after LD removal
+
+Method: Robust Mahalanobis distance on PC loadings + Gaussian Smoothing = removing long-range LD outliers.
+
+&lt;img src="figures/UKBB-loadings.svg" width="98%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Remaining structure: 16 PCs
+
+&lt;img src="figures/UKBB-PC1-20.png" width="85%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Detection of outlier samples in 1000G
+
+Method: compare density around point with density around its K-Nearest Neighbours.
+
+&lt;img src="figures/outliers-1000G.svg" width="80%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Restricting to homogeneous individuals
+
+Method: Robust Mahalanobis distance on PC scores (approx. `\(\chi^2(K)\)`).
+
+&lt;img src="figures/homogeneous.svg" width="85%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Projection of new individuals into reference PCA space
+
+**Issue:** shrinkage bias when projecting new individuals (when p &gt; n).
+
+PCA on 60% of 1000G (**black**) / Projecting on remaining 40% (**red**):
+
+&lt;img src="figures/proj1000G-PC1-8.svg" width="95%" style="display: block; margin: auto;" /&gt;
+
+Shrinkage factors: `1.01 1.02 1.07 1.09 1.51 1.68 1.94 1.40 2.88 3.17 2.90 2.92 3.23  5.13 5.25 5.04 4.58 5.69 6.26 6.32`.
+
+---
+
+## Projection of new individuals into reference PCA space
+
+**Solution:** Online Augmentation, Decomposition, and Procrustes (OADP) projection (Zhang et al. 2019). We provide faster implementation.
+
+PCA on 60% of 1000G (**black**) / OADP projection on remaining 40% (**blue**):
+
+&lt;img src="figures/proj1000G-PC1-8.svg" width="95%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Projection of new individuals into reference PCA space
+
+**Limitation:** Projection on related individuals does not work.
+
+PCA on 60% of 1000G (**black**) / OADP projection on same 60% (**blue**):
+
+&lt;img src="figures/proj1000G-related.svg" width="75%" style="display: block; margin: auto;" /&gt;
+
+---
+
+class: inverse, center, middle
+
+# Thanks!
+
+&lt;br&gt;
+
+&lt;br&gt;
+
+<i class="fab  fa-twitter "></i> [privefl](https://twitter.com/privefl) &amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; <i class="fab  fa-github "></i> [privefl](https://github.com/privefl) &amp;nbsp;&amp;nbsp;&amp;nbsp;&amp;nbsp; <i class="fab  fa-stack-overflow "></i> [F. Privé](https://stackoverflow.com/users/6103040/f-priv%c3%a9)
+
+.footnote[Slides created via the R package [**xaringan**](https://github.com/yihui/xaringan).]
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "github",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

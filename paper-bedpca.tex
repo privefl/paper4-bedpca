@@ -136,6 +136,8 @@ Then, we compute $K$ PC scores and loadings.
 To summarise the contribution of each variant in all $K$ PC loadings, we compute the robust Mahalanobis distances (Section \ref{maha}) of these PC loadings.  
 This captures both population-differentiating variants as well as long-range LD regions; to capture consecutive outliers that corresponds to long-range LD regions, we apply a Gaussian smoothing to these statistics.
 
+[FIGURE TO ILLUSTRATE THIS?]
+
 Finally, to choose the threshold of outlierness based on the previously described statistics, we use a modified version of Tukey's rule, a standard rule for detecting outliers \cite[]{tukey77}. 
 The standard upper limit defined by Tukey's rule is $q_{75\%}(x) + 1.5 \cdot IQR(x)$, where $x$ is the vector of computed statistics and $IQR(x) = q_{75\%}(x) - q_{25\%}(x)$ is the interquartile range.
 However, there are two pitfalls when using Tukey's rule. First, Tukey's rule assumes a normally distributed sample. For example, when the data is skewed, it does not work that well. We account for skewness using the medcouple \cite[]{hubert2008adjusted}. Standard Tukey's rule also uses a fixed coefficient (1.5) that does not account for multiple testing, which means that for large samples, there are always some outliers detected when using 1.5. 
@@ -167,10 +169,12 @@ This results in 2490 individuals of the 1000G project (phase 3) in PLINK bed/bim
 Resulting PLINK files and R code to generate these files are available at \url{https://doi.org/10.6084/m9.figshare.9208979.v3}. 
 To easily download these data, we provide a function called \texttt{download\_1000G} in R package bigsnpr.
 
+[SHOULD DESCRIBE QC FOR OTHER DATASETS TOO?]
+
 
 \subsection{Projecting PCs from a reference dataset \label{proj}}
 
-%[SEPARATE STEPS?]
+[SCHEME TO ILLUSTRATE OADP?]
 
 To project PCs of a reference dataset (e.g.\ 1000G) to a target genotype dataset, we implement the following 3 steps in function \texttt{bed\_projectPCA} of package bigsnpr: 1) matching the variants of each dataset, including removing ambiguous alleles [A/T] and [C/G], and matching strand and direction of the alleles; 2) computing PCA of the reference dataset using the matched variants only; 3) projecting computed PCs to the target data using an optimised implementation (see Supplementary Materials) of the Online Augmentation, Decomposition, and Procrustes (OADP) transformation \cite[]{zhang2019fast}.
 
@@ -192,10 +196,12 @@ We use the 1000 Genomes (1000G) Project data (section \ref{1000G}) to infer the 
 \subsection{Performance}
 
 To show that we provide very performant implementations of the different methods presented in this paper, we apply them to the UK Biobank. We use 20 physical cores for most of the computations.
-It takes 22 minutes to perform a first phase of clumping on 488,371 individuals genotyped over 504,139 variants, which reduces the number of variants to 261,307. It then takes 34 minutes to compute the first 20 PCs using these 261,307 variants.
+It takes 22 minutes to perform a first phase of clumping on 406,545 unrelated individuals genotyped over 504,139 variants, which reduces the number of variants to 261,307. It then takes 34 minutes to compute the first 20 PCs using these 261,307 variants.
 If performing the automatic procedure for LD detection, it takes 5 hours to perform the initial clumping step, 6 computation of PCs and 5 outlier variant detection (i.e.\ 5 iterations of outlier detection and one final computation of PCs).
 
 It takes 8 minutes to match the 1000G data to the UKBB data and compute 20 PCs of the 1000G data using the automatic outlier detection technique. It takes 12 minutes more to do the OADP projection of all 488,371 individuals of the UKBB data to the PCA computed using the 1000G data. Once projections are available, et takes only a couple minutes to perform the ancestry estimation.
+
+Finally, it took only 6 minutes to compute the 30-Nearest Neighbours of PC scores for all UK Biobank individuals.
 
 [TALK ABOUT KNN]
 
@@ -207,6 +213,8 @@ Moreover, our automatic procedure removing long-range LD regions did not converg
 \noindent[SHOW INITIAL PC SCORES OF UKBB?]
 
 \noindent[COMPUTE MAHA ON LOADINGS TO SHOW THE PEAKS SUMMARIZED IN ALL 16-18 PCS?]
+
+\noindent[SHOW THAT PROCEDURE IS OKAY FOR SMALLER DATASETS?]
 
 \subsection{Projecting PCs from a reference dataset}
 
