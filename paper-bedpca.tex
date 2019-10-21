@@ -219,10 +219,11 @@ Blue points are the 40\% remaining individuals, projected using the Online Augme
 
 [REDO WITH OUTLIER REMOVAL?]
 
-We performed ancestry estimation of the individuals in the UK Biobank using the 1000G data (Section \ref{ancestry}), discarding individuals with unknown ancestry or mixed ancestry. 
-We did not infer ancestry for 15.5\% of UK Biobank that had a maximum p-value smaller than 0.05 (Figure \ref{fig:ancestry-pval}). 
-More precisely, among ``White'', ``British'' and ``Irish'' ancestries, this represented respectively 20.4\%, 10.5\% and 19.8\%, while this represented between 48.5\% (``Chinese'') and 81.4\% (``Bangladeshi'') for other populations. 
-In other words, most of the UK Biobank individual who self-reports as ``Bangladeshi'' could not be attributed to any 1000G population, although 1000G data includes several ``Bengali in Bangladesh'' (SAS\_BEB).
+We performed ancestry estimation of the individuals in the UK Biobank using the 1000G data (Section \ref{ancestry}), discarding individuals with unknown ancestry or mixed ancestry.
+We used from PC1 to PC14 and PC16 based on visual inspection of PC scores (Figure \ref{fig:PC-1000G-UKBB}).
+We did not infer ancestry for 15.9\% of UK Biobank that had a maximum p-value smaller than 0.05 (Figure \ref{fig:ancestry-pval}). 
+More precisely, among ``White'', ``British'' and ``Irish'' ancestries, this represented respectively 20.2\%, 11.1\% and 20.3\%, while this represented between 44.5\% (``Chinese'') and 74.3\% (``Bangladeshi'') for other populations. 
+In other words, 3 out of 4 of the UK Biobank individual who self-reports as ``Bangladeshi'' could not be attributed to any 1000G population, although 1000G data includes several ``Bengali in Bangladesh'' (SAS\_BEB).
 Only 10 people out of 401,048 were wrongly classified in ``super'' population of the 1000G; e.g.\ one Chinese person was classified as European by our method (Table \ref{tab:ancestry-pred}). 
 Moreover, our method is able to accurately differentiate between sub-continental populations such as differentiating between Pakistani, Bangladeshi and Chinese people (Table \ref{tab:ancestry-pred}).
 
@@ -394,6 +395,14 @@ Blue points are the same 60\% individuals, projected using the Online Augmentati
 Black points are PC scores of 1000G individuals used for computing PCA.
 Blue points are the 488,371 individuals from the UK Biobank, projected using the Online Augmentation, Decomposition, and Procrustes (OADP) transformation. Note that only 20,000 random individuals are represented in this plot.
 \label{fig:proj1000G-5}}
+\end{figure}
+
+\vspace*{1em}
+
+\begin{figure}[!htpb]
+\centerline{\includegraphics[width=0.8\textwidth]{PC-1000G-UKBB.pdf}}
+\caption{Principal Component (PC) scores 1 to 20 of the 1000 Genomes (1000G) project using variants matched with the UK Biobank. Colors represent populations of the 1000G data.
+\label{fig:PC-1000G-UKBB}}
 \end{figure}
 
 \vspace*{1em}
