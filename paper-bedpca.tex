@@ -146,6 +146,8 @@ This procedure is implemented in function \texttt{bed\_autoSVD} or R package big
 
 \subsection{Detecting outlier samples in PCA}
 
+[REDO]
+
 We propose [BOF] different outlier detection techniques for PCA.
 
 
@@ -186,6 +188,7 @@ We use the 1000 Genomes (1000G) Project data (section \ref{1000G}) to infer the 
 
 \noindent[TALK ABOUT REMOVING OF LRLDR?]
 
+
 \subsection{Performance}
 
 To show that we provide very performant implementations of the different methods presented in this paper, we apply them to the UK Biobank. We use 20 physical cores for most of the computations.
@@ -195,6 +198,15 @@ If performing the automatic procedure for LD detection, it takes 5 hours to perf
 It takes 8 minutes to match the 1000G data to the UKBB data and compute 20 PCs of the 1000G data using the automatic outlier detection technique. It takes 12 minutes more to do the OADP projection of all 488,371 individuals of the UKBB data to the PCA computed using the 1000G data. Once projections are available, et takes only a couple minutes to perform the ancestry estimation.
 
 [TALK ABOUT KNN]
+
+\subsection{PCA of the UK Biobank}
+
+Principal Components (PC) loadings reported by the UK Biobank clearly show that PC19 to PC40 capture LD structure, which is also the case for PC16 and PC18, although less pronounced (see peaks in figure \ref{fig:UKBB-loadings40}). 
+Moreover, our automatic procedure removing long-range LD regions did not converge after 5 iterations, meaning that it kept detecting long-range LD regions at each iteration. Therefore, we were able to capture only 16 PCs that shows population stratification and not LD structure (Figures \ref{fig:UKBB-screeplot}, \ref{fig:UKBB-scores} and \ref{fig:UKBB-loadings}).
+
+\noindent[SHOW INITIAL PC SCORES OF UKBB?]
+
+\noindent[COMPUTE MAHA ON LOADINGS TO SHOW THE PEAKS SUMMARIZED IN ALL 16-18 PCS?]
 
 \subsection{Projecting PCs from a reference dataset}
 
@@ -359,6 +371,32 @@ As $U^T U = I$, we note that $(U \Delta)^T \widetilde{U} = \Delta V_2[1{:}K,~]$ 
 
 \subsection*{Supplementary figures}
 
+\begin{figure}[!htpb]
+\centerline{\includegraphics[width=0.9\textwidth]{UKBB-loadings1-40.pdf}}
+\caption{Principal Component (PC) loadings 1 to 40 reported by the UK Biobank.
+\label{fig:UKBB-loadings40}}
+\end{figure}
+
+\begin{figure}[!htpb]
+\centerline{\includegraphics[width=0.8\textwidth]{UKBB-screeplot.pdf}}
+\caption{Scree plot: plot of singular values computed from the UK Biobank.
+\label{fig:UKBB-screeplot}}
+\end{figure}
+
+\begin{figure}[!htpb]
+\centerline{\includegraphics[width=0.9\textwidth]{UKBB-PC1-20.png}}
+\caption{Principal Component (PC) scores 1 to 20 computed from the UK Biobank.
+\label{fig:UKBB-scores}}
+\end{figure}
+
+\begin{figure}[!htpb]
+\centerline{\includegraphics[width=0.9\textwidth]{UKBB-loadings.pdf}}
+\caption{Principal Component (PC) loadings 1 to 20 computed from the UK Biobank.
+\label{fig:UKBB-loadings}}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \vspace*{1em}
 
 \begin{figure}[!htpb]
@@ -396,6 +434,9 @@ Black points are PC scores of 1000G individuals used for computing PCA.
 Blue points are the 488,371 individuals from the UK Biobank, projected using the Online Augmentation, Decomposition, and Procrustes (OADP) transformation. Note that only 20,000 random individuals are represented in this plot.
 \label{fig:proj1000G-5}}
 \end{figure}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \vspace*{1em}
 
