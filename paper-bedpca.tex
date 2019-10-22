@@ -203,7 +203,6 @@ It takes 8 minutes to match the 1000G data to the UKBB data and compute 20 PCs o
 
 Finally, it took only 6 minutes to compute the 30-Nearest Neighbours of PC scores for all UK Biobank individuals.
 
-[TALK ABOUT KNN]
 
 \subsection{PCA of the UK Biobank}
 
@@ -216,10 +215,12 @@ Moreover, our automatic procedure removing long-range LD regions did not converg
 
 \noindent[SHOW THAT PROCEDURE IS OKAY FOR SMALLER DATASETS?]
 
+\noindent[SHOW ABLE TO RECONSTRUCT PCA? MAYBE NOT PC17]
+
 \subsection{Projecting PCs from a reference dataset}
 
-We use 60\% of individuals in the 1000G data (section \ref{1000G}) to compute the PCA ($K=20$ PCs). Then, we project the remaining 40\% individuals using three methods: 1/ simply multiplying the genotypes of these individuals by the previously computed loadings, 2/ correcting the simple projections using asymptotic shrinkage factors as determined by R package hdpca v1.0.0 \cite[]{dey2019asymptotic} and 3/ the OADP projection (section \ref{proj}). 
-When simply projecting using loadings, there is no apparent shrinkage for PC1 and PC2, a weak [REWORD?] shrinkage for PC3 and PC4, and a large shrinkage for PC5 to PC8 (Figure \ref{fig:proj1000G}).
+We use 60\% of individuals in the 1000G data (section \ref{1000G}) to compute the PCA ($K=20$ PCs) [EXPLICIT SAMPLE SIZE]. Then, we project the remaining 40\% individuals using three methods: 1/ simply multiplying the genotypes of these individuals by the previously computed loadings, 2/ correcting the simple projections using asymptotic shrinkage factors as determined by R package hdpca v1.0.0 \cite[]{dey2019asymptotic} and 3/ the OADP projection (section \ref{proj}). 
+When simply projecting using loadings, there is no apparent shrinkage for PC1 and PC2, a weak [REWORD?] shrinkage for PC3 and PC4, and a large shrinkage for PC5 to PC8 (Figure \ref{fig:proj1000G}). [USE VALUES?]
 In contrast, there is no apparent shrinkage when projecting new individuals with OADP (Figure \ref{fig:proj1000G}).
 Simple projection is affected even more by this shrinkage for PC9 to PC20, while OADP appears free of this issue (Figure \ref{fig:proj1000G-2}).
 We show the same results when projecting the full UK Biobank data onto PCA computed using 1000G data  (Figure \ref{fig:proj1000G-5}).
@@ -234,6 +235,8 @@ Red points are the 40\% remaining individuals, projected by simply multiplying t
 Blue points are the 40\% remaining individuals, projected using the Online Augmentation, Decomposition, and Procrustes (OADP) transformation.
 \label{fig:proj1000G}}
 \end{figure}
+
+When computing the PCA on the UK Biobank using 406,545 unrelated individuals and 171,977 variants, and projecting the 1000G data onto this reference PCA space, shrinkage is much smaller ($\leq 1.08$ for all 20 first PCs, Figure \ref{fig:proj1000G-6}).
 
 \subsection{Ancestry matching}
 
@@ -442,6 +445,16 @@ Black points are PC scores of 1000G individuals used for computing PCA.
 Blue points are the 488,371 individuals from the UK Biobank, projected using the Online Augmentation, Decomposition, and Procrustes (OADP) transformation. Note that only 20,000 random individuals are represented in this plot.
 \label{fig:proj1000G-5}}
 \end{figure}
+
+\begin{figure}[!htpb]
+\centerline{\includegraphics[width=0.8\textwidth]{proj1000G-UKBB2.png}}
+\caption{Principal Component (PC) scores 1 to 16 from the UK Biobank and projected individuals of the 1000 Genomes (1000G) project.
+Black points are the UK Biobank individuals used for computing PCA.
+Red points are the individuals from 1000G, projected by simply multiplying their genotypes by the corresponding PC loadings.
+Blue points are the individuals from 1000G, projected using the Online Augmentation, Decomposition, and Procrustes (OADP) transformation.
+\label{fig:proj1000G-6}}
+\end{figure}
+
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
