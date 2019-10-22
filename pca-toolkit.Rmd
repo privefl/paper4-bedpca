@@ -64,7 +64,7 @@ Still unfinished work.
 
 - Compute PCA on PLINK .bed files (with missing values)
 
-- Perform pruning to reduce effect of Linkage Disequilibrium (LD)
+- Perform pruning or clumping to reduce effect of Linkage Disequilibrium (LD)
 
 - Further removing of long-range LD regions
 
@@ -82,21 +82,21 @@ Still unfinished work.
 
 <br>
 
-Using 20 physical cores,
-
-- takes 22 minutes to perform a first phase of clumping on 406,545 unrelated individuals genotyped over 504,139 variants, which reduces the number of variants to 261,307. 
-
-- then takes 34 minutes to compute the first 20 PCs using these 261,307 variants.
-
---
-
-<br>
-
 Method:
 
 - Directly memory-map the bed file (access it as if it were a matrix in memory)
 
 - Same PCA algorithm based on random projections, already used in PCA of R package bigstatsr (Privé et al. 2018) and in FlashPCA2 (Abraham et al. 2017).
+
+--
+
+<br>
+
+Using 20 physical cores,
+
+- takes 22 minutes to perform a first phase of clumping on 406,545 unrelated individuals genotyped over 504,139 variants, which reduces the number of variants to 261,307. 
+
+- then takes 34 minutes to compute the first 20 PCs using these 261,307 variants.
 
 ---
 
@@ -186,9 +186,10 @@ knitr::include_graphics("figures/proj1000G-related.svg")
 
 ## Ancestry matching
 
-Method: Robust Mahalanobis distances by reference population.
+Method: Robust Mahalanobis distance for each reference population    
+\+ minimum distance (or maximum p-value).
 
-```{r, out.width="70%"}
+```{r, out.width="65%"}
 knitr::include_graphics("figures/us.svg")
 ```
 
