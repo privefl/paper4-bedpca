@@ -78,6 +78,16 @@ Still unfinished work.
 
 ---
 
+## Overview of existing methods
+
+<br> 
+
+```{r, out.width="98%"}
+knitr::include_graphics("figures/method-overview.png")
+```
+
+---
+
 ## Pruning and PCA
 
 <br>

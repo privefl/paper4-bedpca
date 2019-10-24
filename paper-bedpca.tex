@@ -8,7 +8,7 @@
 \usepackage[T1]{fontenc}
 \usepackage[latin1]{inputenc}
 \usepackage{geometry}
-\geometry{verbose,letterpaper,tmargin=2cm,bmargin=2cm,lmargin=2cm,rmargin=2cm}
+\geometry{verbose,letterpaper,tmargin=2cm,bmargin=2cm,lmargin=1.5cm,rmargin=1.5cm}
 \usepackage{rotating}
 \usepackage{color}
 \usepackage{graphicx}
@@ -18,7 +18,9 @@
 \usepackage{lineno}
 \usepackage{hyperref}
 \usepackage{bbm}
+\usepackage{makecell}
 
+\renewcommand{\arraystretch}{2}
 
 %\usepackage{xr}
 %\externaldocument{SCT-supp}
@@ -62,7 +64,7 @@
 
 
 \title{Efficient toolkit implementing best practices for principal component analysis of population genetic data}
-\author{Florian Priv\'e,$^{\text{1,}*}$ John J. McGrath,$^{\text{1,2,3}}$ and Bjarni J. Vilhj\'almsson$^{\text{1,}*}$}
+\author{Florian Priv\'e,$^{\text{1,}*}$ Keurcien Luu, Michael G.B. Blum, John J. McGrath,$^{\text{1,2,3}}$ and Bjarni J. Vilhj\'almsson$^{\text{1,}*}$}
 
 \date{~ }
 \maketitle
@@ -116,6 +118,30 @@ In this paper, we derive a new implementation of PCA that can be used directly o
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Material and Methods}
+
+\begin{table}[h]
+\centering
+\caption{Overview of existing methods. [TODO: ADD CITATIONS]} 
+\label{tab:method-overview}
+\begin{tabular}{|c|c|c|c|}
+\hline
+Analysis & Method / Software & Pros & Cons \\
+\hline
+\multirow{3}{*}{PCA} & bigstatsr / bigsnpr & \makecell{Fast and accurate + handle dosages \\ + thinning options directly included} & \makecell{Own format without missing values \\ (fast functions are available \\ for converting and imputing)} \\
+ & FlashPCA2 & Fast and accurate & Not parallelised? \\
+ & \makecell{PLINK 2.0 \\ (reimplementation of FastPCA)} & Very fast (AVX2 only?) & Not always 100\% accurate \\
+\hline
+\makecell{Detection of \\ oultier samples} & \makecell{"6 SDs from the mean" \\ (EIGENSOFT)} & Simple & Assume Gaussian distritbution \\
+\hline
+\makecell{Detection of \\ homogeneous \\ samples} & Aberrant & Robust & Only two statistics at once? \\
+\hline
+\multirow{5}{*}{\makecell{Projection of \\ new individuals \\ onto reference \\ PCA space}} & Simple projection (multiplication by loadings) & Simple & Shrinkage biased \\
+  & Bias-adjusted projection & Independent of new samples & \makecell{Assume same shrinkage for all individuals \\ + model-based \\ + need all eigenvalues of reference} \\
+  & \makecell{Augmentation, Decomposition, \\ and Procrustes transformation (ADP)} & Accurate & Slow \\
+  & Online ADP (OADP) & Much faster than OADP & Does not work for related individuals \\ 
+\hline
+\end{tabular}
+\end{table}
 
 \subsection{PCA with missing values}
 
