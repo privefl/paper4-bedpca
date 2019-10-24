@@ -4,12 +4,18 @@ library(ggplot2)
 
 bedfiles <-
   sapply(c("tmp-data/genome_Florian_Prive_v5_Full_20190212023418.txt",
-           "tmp-data/genome_B_V_v5_Full_20191017230843.txt"),
+           "tmp-data/genome_B_V_v5_Full_20191017230843.txt",
+           "tmp-data/genome_Esben_Agerbo_v3_Full_20190131054436.txt"),
          function(genome) {
-           name <- sub("\\.txt$", "", basename(genome))
+           name <- gsubfn::strapply(
+             basename(genome), "^genome_(.+_.+)_v.+_Full_[0-9]+\\.txt$")[[1]]
            genome <- bigreadr::fread2(genome)
            bim <- bigreadr::fread2(sub_bed(download_1000G('tmp-data'), '.bim'))
            genome2 <- genome %>%
+             filter(chromosome %in% 1:22 &
+                      `# rsid` != "rs4001921",
+                      !vctrs::vec_duplicate_detect(genome[2:3]) &
+                      !vctrs::vec_duplicate_detect(genome[[1]])) %>%
              tidyr::separate(genotype, c("g1", "g2"), sep = 1) %>%
              mutate(chromosome = as.integer(chromosome)) %>%
              left_join(bim, by = c(chromosome = "V1", position = "V4")) %>%
@@ -81,13 +87,21 @@ all_pval <- sapply(pop_PCs$val, function(PC) {
 })
 
 colnames(all_pval) <- pop_PCs$key
-round(100 * all_pval, 2)
-#      Central Europe SE Europe Eastern Europe Anglo-Irish Isles Scandinavia
-# [1,]           0.05         0              0             45.63       85.82
-# [2,]           1.24         0              0              0.22        0.18
-#      Italy Germany SW Europe Switzerland Belgium France Netherlands
-# [1,]  0.00    1.64         0        0.00    0.01   0.06        0.00
-# [2,]  0.01    9.63         0       28.37   30.90  24.60        0.79
+rownames(all_pval) <- obj.bed$fam$sample.ID
+t(round(100 * all_pval, 2))
+#                     B_V Esben_Agerbo Florian_Prive
+# Central Europe     0.10         0.01          4.28
+# SE Europe          0.00         0.00          0.00
+# Eastern Europe     0.00         0.00          0.00
+# Anglo-Irish Isles 17.69        33.13          0.81
+# Scandinavia       93.96        53.10          0.00
+# Italy              0.00         0.00          0.03
+# Germany           19.11         4.13         20.71
+# SW Europe          0.00         0.00          0.00
+# Switzerland        0.00         0.00         29.30
+# Belgium            0.02         0.09         52.41
+# France             0.01         0.01         15.29
+# Netherlands        0.39         0.22          0.33
 
 qplot(PC.ref[, 2], PC.ref[, 1], size = I(2), color = pop2) +
   stat_ellipse(geom = "polygon", alpha = 0.5, aes(fill = pop2)) +
@@ -100,3 +114,33 @@ qplot(PC.ref[, 2], PC.ref[, 1], size = I(2), color = pop2) +
   coord_equal()
 
 # ggsave("figures/us.pdf", width = 8, height = 8)
+
+bed.ref2 <- bed(download_1000G("tmp-data"))
+fam2 <- bigreadr::fread2("tmp-data/1000G_phase3_common_norel.fam2")
+
+system.time(
+  test2 <- bed_projectPCA(bed.ref2, obj.bed, k = 10, ncores = nb_cores(),
+                          ind.row.ref = which(fam2$`Super Population` == "EUR"),
+                          strand_flip = FALSE)
+) # using 18,764 variants only
+
+plot_grid(plotlist = lapply(1:3, function(k) {
+  k1 <- 2 * k - 1
+  k2 <- 2 * k
+  qplot(PC.ref[, k1], PC.ref[, k2], size = I(2), color = pop2) +
+    theme_bigstatsr(0.7) +
+    labs(x = paste0("PC", k1), y = paste0("PC", k2))
+}))
+
+seq_PC <- 1:4
+pop_PCs <- vctrs::vec_split(PC.ref, pop2)
+
+all_pval <- sapply(pop_PCs$val, function(PC) {
+  maha <- bigutilsr::covRob(PC[, seq_PC], estim = "pairwiseGK")
+  dist <- mahalanobis(proj2[, seq_PC], center = maha$center, cov = maha$cov)
+  pval <- pchisq(dist, df = length(seq_PC), lower.tail = FALSE)
+})
+
+colnames(all_pval) <- pop_PCs$key
+rownames(all_pval) <- obj.bed$fam$sample.ID
+t(round(100 * all_pval, 2))

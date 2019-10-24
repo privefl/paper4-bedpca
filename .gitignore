@@ -13,3 +13,4 @@ paper*.pdf
 *.aux
 *.tex.bak
 data
+code/project-us-to-POPRES.R
