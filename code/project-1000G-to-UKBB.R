@@ -3,6 +3,7 @@ library(bigreadr)
 rel <- fread2("data/ukb25589_rel_s488346.dat")
 fam <- fread2("data/ukbb_bed/ukbb_488282.fam")
 ind.row <- which(!fam$V2 %in% rel$ID2)
+length(ind.row)  # 406545
 bed.ref <- bed("data/ukbb_bed/ukbb_488282.bed")
 obj.bed <- bed(download_1000G("data"))
 
