@@ -6,7 +6,7 @@ obj.bed <- bed(bedfile.ref)
 
 set.seed(1); train <- sample(nrow(obj.bed), 0.6 * nrow(obj.bed))
 
-# obj.svd <- bed_autoSVD2(obj.bed, ind.row = train, k = 20, ncores = nb_cores())
+# obj.svd <- bed_autoSVD(obj.bed, ind.row = train, k = 20, ncores = nb_cores())
 # saveRDS(obj.svd, "tmp-data/SVD_1000G.rds")
 obj.svd <- readRDS("tmp-data/SVD_1000G.rds")
 
@@ -23,8 +23,8 @@ shrinkage <- unname(sapply(1:20, function(k) {
   MASS::rlm(proj2[, k] ~ proj1[, k] + 0)$coef
 }))
 round(shrinkage, 2)
-#  [1] 1.01 1.02 1.07 1.09 1.51 1.68 1.94 1.40 2.88 3.17 2.90 2.92 3.23
-# [14] 5.13 5.25 5.04 4.58 5.69 6.26 6.32
+#  [1] 1.01 1.02 1.06 1.09 1.50 1.69 1.98 1.39 2.79 3.14
+# [11] 3.64 3.18 2.47 3.88 5.31 5.84 3.45 6.55 3.68 6.70
 
 plot_grid(plotlist = lapply(1:4, function(k) {
   k1 <- 2 * k - 1
@@ -70,8 +70,8 @@ stopifnot(all.equal(sqrt(eigval[1:20]), obj.svd$d))
 proj3 <- hdpca::pc_adjust(eigval, p = length(ind.keep), n = length(train),
                           test.scores = proj1, n.spikes.max = 50)
 round(shrinkage2 <- (proj3 / proj1)[1, ], 2)
-#  [1] 1.01 1.02 1.07 1.10 1.43 1.54 1.73 1.82 2.51 2.78 2.88 2.91 3.11
-# [14] 1.00 1.00 1.00 1.00 1.00 1.00 1.00
+#  [1] 1.01 1.02 1.07 1.10 1.43 1.54 1.74 1.79 2.47 2.77
+# [11] 2.84 3.15 1.00 1.00 1.00 1.00 1.00 1.00 1.00 1.00
 
 plot_grid(plotlist = lapply(3:6, function(k) {
   k1 <- 2 * k - 1
@@ -94,6 +94,7 @@ plot_grid(plotlist = lapply(3:6, function(k) {
 test2 <- bed_projectSelfPCA(obj.svd, obj.bed,
                             ind.row = train,
                             ncores = nb_cores())
+stopifnot(all.equal(test2$simple_proj, PC.ref, tolerance = 1e-6))
 proj4 <- test2$OADP_proj
 
 plot_grid(plotlist = lapply(3:6, function(k) {
