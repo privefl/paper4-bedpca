@@ -51,6 +51,15 @@ system.time(
 proj1 <- proj$simple_proj
 proj2 <- proj$OADP_proj
 
+# shrinkage coefficients
+shrinkage <- unname(sapply(1:50, function(k) {
+  MASS::rlm(proj2[, k] ~ proj1[, k] + 0)$coef
+}))
+round(shrinkage, 2)
+#  [1] 1.00 1.00 1.01 1.01 1.04 1.05 1.07 1.07 1.11 1.12 1.13 1.20 1.23 1.25 1.30 1.31 1.35
+# [18] 1.37 1.40 1.43 1.44 1.50 1.52 1.54 1.56 1.56 1.59 1.65 1.66 1.70 1.73 1.74 1.74 1.77
+# [35] 1.77 1.78 1.78 1.79 1.79 1.79 1.80 1.80 1.80 1.80 1.80 1.80 1.80 1.80 1.80 1.80
+
 
 PC.ref <- predict(obj.svd)
 ind <- rows_along(PC.ref) # sample(nrow(PC.ref), 10e3)
