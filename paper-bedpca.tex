@@ -84,6 +84,9 @@
 \newpage
 
 \abstract{
+
+[REDO LATER]
+
 Principal Component Analysis (PCA) of genetic data is routinely used to infer ancestry and control for population structure in various genetic analyses. However, conducting PCA in large populations is complicated, and there are several potential pitfalls. These pitfalls include (1) capturing Linkage Disequilibrium (LD) structure instead of population structure, (2) projected PCs that suffer from shrinkage bias when projecting PCA from a reference dataset to another independent dataset, and (3) detecting sample outliers. In this work, we explore these pitfalls of using PCA, and present efficient solutions to these pitfalls. Following applications to diverse datasets, we make recommendations for best practices and implement the proposed solutions in an efficient and user-friendly toolkit for performing these analyses in the R packages bigsnpr and bigutilsr.
 
 For example, we show that PC18 to PC40 in the UK Biobank are capturing LD structure. Using our automatic algorithm for removing long-range LD region, we are able to recover only 17 PCs that capture population structure only. Therefore, we recommend using only 17 PCs from the UK Biobank. Another example: when projecting the PCA computed on the 1000 Genomes project, although PC1 to PC4 suffer from only moderate shrinkage (1.00-1.08), PC5 for example suffers from a shrinkage factor of 1.51 and PC10 from a shrinkage factor of 3.16. We provide a fast way to project new individuals and that is not affected by this shrinkage bias. We also show how to restrict to individuals that are genetically homogeneous based on PCA. 
@@ -111,7 +114,7 @@ Finally, PC scores may capture outliers that are due to family structure, popula
 
 In this paper, we derive a new implementation of PCA that can be used directly on bed/bim/fam PLINK files with some missing values, which we make available in R package bigsnpr v1.0.0. Then, we recall some of the pitfalls of PCA computation on genotype data and provide efficient solutions to these issues. These includes accouting for LD structure in PCA, detecting outliers and projecting PCs to another study sample without shrinkage bias.
 
-[SHOULD ALSO TALK ABOUT PCADAPT AND LD]
+[SHOULD ALSO TALK ABOUT PCADAPT -> CONFOUNDED BY LD + SHOULD COMPUTE MAHA ON UNLINKED]
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -211,7 +214,7 @@ To easily download these data, we provide a function called \texttt{download\_10
 
 \section{Results}
 
-\noindent[TODO SECTION ON SAMPLE OUTLIER REMOVAL]
+\noindent[TODO SECTION ON SAMPLE OUTLIER REMOVAL / HOMOGENEOUS SAMPLES]
 
 \noindent[TALK ABOUT EFFECT OF MISSING VALUES ON PCA?]
 
@@ -239,6 +242,8 @@ We show the same results when projecting the full UK Biobank data onto PCA compu
 When correcting projected PC scores with asymptotic shrinkage factors, bias is smaller than when simply projecting loadings, yet, it is apparent for PC7-8 and PC11-12 (Figure \ref{fig:proj1000G-3}).
 Finally, to assess if OADP could be used to project individuals that are related to some individuals that were used to compute PCA, we projected these individuals (as if we were projecting their monozygotic twins) using OADP. Projections of related individuals using OADP shows some reverse [REWORD?] shrinkage (Figure \ref{fig:proj1000G-4}).
 
+When computing the PCA on the UK Biobank using 406,545 unrelated individuals and 171,977 variants, and projecting the 1000G data onto this reference PCA space, shrinkage is much smaller ($\leq 1.08$ for all 20 first PCs, Figure \ref{fig:proj1000G-6}).
+
 \begin{figure}[!htpb]
 \centerline{\includegraphics[width=0.8\textwidth]{proj1000G-PC1-8.pdf}}
 \caption{Principal Component (PC) scores 1 to 8 of the 1000 Genomes project.
@@ -248,18 +253,17 @@ Blue points are the 40\% remaining individuals, projected using the Online Augme
 \label{fig:proj1000G}}
 \end{figure}
 
-When computing the PCA on the UK Biobank using 406,545 unrelated individuals and 171,977 variants, and projecting the 1000G data onto this reference PCA space, shrinkage is much smaller ($\leq 1.08$ for all 20 first PCs, Figure \ref{fig:proj1000G-6}).
-
-
 
 \subsection{PCA of the UK Biobank}
 
 Principal Components (PC) loadings reported by the UK Biobank clearly show that PC19 to PC40 capture LD structure, which is also the case for PC16 and PC18, although less pronounced (see peaks in figure \ref{fig:UKBB-loadings40}). 
 Moreover, our automatic procedure removing long-range LD regions did not converge after 5 iterations, meaning that it kept detecting long-range LD regions at each iteration. Therefore, we were able to capture only 16 PCs that shows population stratification and not LD structure (Figures \ref{fig:UKBB-screeplot}, \ref{fig:UKBB-scores} and \ref{fig:UKBB-loadings}).
 
-Then, we computed again PCA after restricting the individuals included in the computations: we randomly subsampled UKBB data to use only 10,000 British individuals (out of 431,029) and to 5000 Irish individuals (out of 12,755), while keeping all individuals with other self-reported individuals. 
-We further removed all individuals for all pairs of related individuals reported by the UKBB. 
-This resulted in 48,942 individuals that we used to compute 50 PCs in less than 3 hours using function \texttt{bed\_autoSVD}. 
+Then, we computed again PCA after restricting the individuals included in the computations: we randomly subsampled UKBB data to use only 10,000 British individuals (out of 431,029) and 5000 Irish individuals (out of 12,755), while keeping all individuals with other self-reported individuals. 
+We further removed all pairs of related individuals reported by the UKBB (both individuals in each pair). 
+This resulted in 48,942 individuals that we used to compute 50 PCs, which took less than 3 hours using function \texttt{bed\_autoSVD} (that converged after 4 iterations of automatic LD removal). 
+We show that we are able to capture at least 40 PCs that display visual population structure (Figures \ref{fig:UKBB-scores2} and \ref{fig:UKBB-screeplot2}).
+We then projected all 439,429 remaining individuals from UKBB onto this PCA space in 41 minutes. Note that these individuals are not supposed to be related to any of the 48,942 individuals used for training PCA because we removed both individuals from each pair of related individuals in UKBB. Projection of new individuals show again clear shrinkage when using simple projection (between 1.00 for PC1 and 1.80 for PC50), but no visible bias when using OADP projection (Figure \ref{fig:projUKBB-related}).
 
 \noindent[SHOW INITIAL PC SCORES OF UKBB?]
 
@@ -288,20 +292,17 @@ This resulted in 48,942 individuals that we used to compute 50 PCs in less than 
 
 %\newpage
 
-\section*{Funding}
-
 \section*{Acknowledgements}
 
+Authors thank Rounak Dey and Seunggeun Lee for helpful discussions about PCA projection.
 This research has been conducted using the UK Biobank Resource under Application Number 25589.
 
-\section{Declaraction of Interests}
+F.P., J.J.M.\ and B.J.V.\ acknowledge Niels Bohr Professorship from the Danish National Research Foundation to Prof.\ John J.\ McGrath, and the Lundbeck Foundation Initiative for Integrative Psychiatric Research, iPSYCH (R248-2017-2003).
 
+\section*{Declaraction of Interests}
 
-As competing interest, you can write
-Michael Blum is an employee at OWKIN.
-
-
-~\\ \textit{Conflict of Interest:} none declared.
+Michael Blum is an employee of OWKIN France.
+The other authors declare no competing interests.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -341,30 +342,6 @@ As $U^T U = I$, we note that $(U \Delta)^T \widetilde{U} = \Delta V_2[1{:}K,~]$ 
 
 \subsection*{Supplementary figures}
 
-\begin{figure}[!htpb]
-\centerline{\includegraphics[width=0.9\textwidth]{UKBB-loadings1-40.pdf}}
-\caption{Principal Component (PC) loadings 1 to 40 reported by the UK Biobank.
-\label{fig:UKBB-loadings40}}
-\end{figure}
-
-\begin{figure}[!htpb]
-\centerline{\includegraphics[width=0.8\textwidth]{UKBB-screeplot.pdf}}
-\caption{Scree plot: plot of singular values computed from the UK Biobank.
-\label{fig:UKBB-screeplot}}
-\end{figure}
-
-\begin{figure}[!htpb]
-\centerline{\includegraphics[width=0.9\textwidth]{UKBB-PC1-20.png}}
-\caption{Principal Component (PC) scores 1 to 20 computed from the UK Biobank.
-\label{fig:UKBB-scores}}
-\end{figure}
-
-\begin{figure}[!htpb]
-\centerline{\includegraphics[width=0.9\textwidth]{UKBB-loadings.pdf}}
-\caption{Principal Component (PC) loadings 1 to 20 computed from the UK Biobank.
-\label{fig:UKBB-loadings}}
-\end{figure}
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \vspace*{1em}
@@ -401,7 +378,8 @@ Blue points are the same 60\% individuals, projected using the Online Augmentati
 \centerline{\includegraphics[width=0.9\textwidth]{proj1000G-UKBB.png}}
 \caption{Principal Component (PC) scores 1 to 16 of the 1000 Genomes project and projected individuals from the UK Biobank.
 Black points are PC scores of 1000G individuals used for computing PCA.
-Blue points are the 488,371 individuals from the UK Biobank, projected using the Online Augmentation, Decomposition, and Procrustes (OADP) transformation. Note that only 20,000 random individuals are represented in this plot.
+Blue points are the 488,371 individuals from the UK Biobank, projected using the Online Augmentation, Decomposition, and Procrustes (OADP) transformation. 
+Note that only 20,000 random projected individuals are represented in this plot.
 \label{fig:proj1000G-5}}
 \end{figure}
 
@@ -414,71 +392,56 @@ Blue points are the individuals from 1000G, projected using the Online Augmentat
 \label{fig:proj1000G-6}}
 \end{figure}
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+\begin{figure}[!htpb]
+\centerline{\includegraphics[width=0.9\textwidth]{UKBB-loadings1-40.pdf}}
+\caption{Principal Component (PC) loadings 1 to 40 reported by the UK Biobank.
+\label{fig:UKBB-loadings40}}
+\end{figure}
+
+\begin{figure}[!htpb]
+\centerline{\includegraphics[width=0.8\textwidth]{UKBB-screeplot.pdf}}
+\caption{Scree plot: plot of singular values computed from the UK Biobank.
+\label{fig:UKBB-screeplot}}
+\end{figure}
+
+\begin{figure}[!htpb]
+\centerline{\includegraphics[width=0.9\textwidth]{UKBB-PC1-20.png}}
+\caption{Principal Component (PC) scores 1 to 20 computed from the UK Biobank.
+\label{fig:UKBB-scores}}
+\end{figure}
+
+\begin{figure}[!htpb]
+\centerline{\includegraphics[width=0.9\textwidth]{UKBB-loadings.pdf}}
+\caption{Principal Component (PC) loadings 1 to 20 computed from the UK Biobank.
+\label{fig:UKBB-loadings}}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\vspace*{1em}
-
 \begin{figure}[!htpb]
-\centerline{\includegraphics[width=0.8\textwidth]{PC-1000G-UKBB.pdf}}
-\caption{Principal Component (PC) scores 1 to 20 of the 1000 Genomes (1000G) project using variants matched with the UK Biobank. Colors represent populations of the 1000G data.
-\label{fig:PC-1000G-UKBB}}
+\centerline{\includegraphics[width=0.8\textwidth]{UKBB-screeplot-restricted.pdf}}
+\caption{Scree plot: plot of singular values computed from the UK Biobank using 48,942 individuals of diverse ancestries.
+\label{fig:UKBB-screeplot2}}
 \end{figure}
 
-\vspace*{1em}
+\begin{figure}[!htpb]
+\centerline{\includegraphics[width=0.9\textwidth]{UKBB-scores-restricted.png}}
+\caption{Principal Component (PC) scores 27 to 50 computed from the UK Biobank using 48,942 individuals of diverse ancestries. Different colors represent different self-reported ancestries.
+\label{fig:UKBB-scores2}}
+\end{figure}
 
 \begin{figure}[!htpb]
-\centerline{\includegraphics[width=0.8\textwidth]{hist-pval-max.pdf}}
-\caption{Maximum p-values based on robust Mahalabonis distances of UK Biobank individuals from each of the 26 1000G populations.
-\label{fig:ancestry-pval}}
+\centerline{\includegraphics[width=0.9\textwidth]{projUKBB-related.png}}
+\caption{Principal Component (PC) scores 27 to 50 of the UK Biobank.
+Black points are the 48,942 individuals of diverse ancestries used for computing PCA.
+Red points are the remaining UKBB individuals, projected by simply multiplying their genotypes by the corresponding PC loadings.
+Blue points are the remaining UKBB individuals, projected using the Online Augmentation, Decomposition, and Procrustes (OADP) transformation.
+Note that only 20,000 random projected individuals are represented in this plot.
+\label{fig:projUKBB-related}}
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-% latex table generated in R 3.6.0 by xtable 1.8-4 package
-% Sat Oct 19 00:18:24 2019
-\begin{table}[ht]
-\centering
-\caption{Ancestry (left) of POPRES individuals and their matching to 1000G populations (top) by our method. See the description of 1000G populations at \url{https://www.internationalgenome.org/category/population/}.} 
-\label{tab:ancestry-pred-popres}
-\begin{tabular}{|l|c|c|c|c|c|}
-  \hline
- & EUR\_CEU & EUR\_GBR & EUR\_IBS & EUR\_TSI & NA \\ 
-  \hline
-Anglo-Irish Isles & 159 & 57 &  &  & 50 \\ 
-  Belgium & 28 & 3 &  &  & 12 \\ 
-  Central Europe & 3 &  &  & 1 & 51 \\ 
-  Eastern Europe & 2 &  &  &  & 28 \\ 
-  France & 14 &  & 13 &  & 62 \\ 
-  Germany & 37 &  &  &  & 34 \\ 
-  Italy &  &  & 12 & 19 & 188 \\ 
-  Netherlands & 10 & 2 &  &  & 5 \\ 
-  Scandinavia & 5 &  &  &  & 10 \\ 
-  SE Europe &  &  &  & 5 & 89 \\ 
-  SW Europe &  &  & 193 &  & 71 \\ 
-  Switzerland & 33 & 1 & 6 &  & 182 \\ 
-   \hline
-\end{tabular}
-\end{table}
-
-% latex table generated in R 3.6.0 by xtable 1.8-4 package
-% Sat Oct 19 00:28:24 2019
-\begin{table}[ht]
-\centering
-\caption{Ancestry (left) of Celiac individuals and their matching to 1000G populations (top) by our method. See the description of 1000G populations at \url{https://www.internationalgenome.org/category/population/}.} 
-\label{tab:ancestry-pred-celiac}
-\begin{tabular}{|l|c|c|c|c|c|c|c|}
-  \hline
- & AMR\_MXL & EUR\_CEU & EUR\_FIN & EUR\_GBR & EUR\_IBS & EUR\_TSI & NA \\ 
-  \hline
-Finland &  & 4 & 1543 & 1 &  & 1 & 922 \\ 
-  Italy &  &  &  &  & 15 & 229 & 795 \\ 
-  Netherlands &  & 802 &  & 382 & 1 &  & 463 \\ 
-  UK & 1 & 2865 & 1 & 2532 & 4 & 5 & 1346 \\ 
-   \hline
-\end{tabular}
-\end{table}
-
 
 \end{document}
