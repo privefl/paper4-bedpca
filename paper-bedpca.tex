@@ -64,26 +64,20 @@
 
 
 \title{Efficient toolkit implementing best practices for principal component analysis of population genetic data}
-\author{Florian Priv\'e,$^{\text{1,}*}$ Keurcien Luu, Michael G.B. Blum, John J. McGrath,$^{\text{1,2,3}}$ and Bjarni J. Vilhj\'almsson$^{\text{1,}*}$}
+\author{Florian Priv\'e,$^{\text{1,}*}$ Keurcien Luu, Michael G.B. Blum,$^{\text{4}}$ John J. McGrath,$^{\text{1,2,3}}$ and Bjarni J. Vilhj\'almsson$^{\text{1,}*}$}
 
 \date{~ }
 \maketitle
 
 \noindent$^{\text{\sf 1}}$National Centre for Register-Based Research, Aarhus University, Aarhus, 8210, Denmark. \\
 \noindent$^{\text{\sf 2}}$Queensland Brain Institute, University of Queensland, St. Lucia, 4072, Queensland, Australia. \\
-\noindent$^{\text{\sf 3}}$Queensland Centre for Mental Health Research, The Park Centre for Mental Health, Wacol, 4076, Queensland, Australia.\\
-
-
-
-
-
-
+\noindent$^{\text{\sf 3}}$Queensland Centre for Mental Health Research, The Park Centre for Mental Health, Wacol, 4076, Queensland, Australia, \\
+\noindent$^{\text{\sf 4}}$OWKIN France, Paris, 75010, France, \\
 \noindent$^\ast$To whom correspondence should be addressed.\\
 
 \noindent Contacts:
 \begin{itemize}
 \item \url{florian.prive.21@gmail.com}
-\item \url{john_mcgrath@qcmhr.uq.edu.au}
 \item \url{bjv@econ.au.dk}
 \end{itemize}
 
@@ -105,14 +99,19 @@ Overall, we believe this work would be of interest for anyone using PCA in their
 \section{Introduction}
 
 Principal Component Analysis (PCA) has been widely used in genetics has been used for many years and in many contexts such as e.g.\ to adjust for population structure in Genome-Wide Association Studies (GWAS) by adding PCs as covariates \cite[]{price2006principal} and to detect loci under selection based on PCA \cite[]{galinsky2016fast,luu2017pcadapt}.
-Much work has been devoted to developing scalable algorithms to compute PCA on data as large as the UK Biobank \cite[]{bycroft2017genome}, which is now possible thanks to software such as FastPCA (fast mode), FlashPCA2, PLINK 2.0 (approx mode), bigstatsr/bigsnpr and TeraPCA \cite[]{galinsky2016fast,abraham2017flashpca2,chang2015second,prive2017efficient,bose2019terapca}.
+Recently, the advent of large population-scale genetic datasets, such as the UK biobank data, has prompted research on developing scalable algorithms to compute PCA on data as large as the UK Biobank \cite[]{bycroft2017genome}.
+This is now possible thanks to software such as FastPCA (fast mode), FlashPCA2, PLINK 2.0 (approx mode), bigstatsr/bigsnpr and TeraPCA \cite[]{galinsky2016fast,abraham2017flashpca2,chang2015second,prive2017efficient,bose2019terapca}.
 
-However, some pitfalls related to PCA of genotype data has been documented and we recall them here. This includes some possible lack of precision of computed PCs of software such as FastPCA and PLINK 2.0, which is not an issue for FlashPCA2 and bigstatsr/bigsnpr \cite[]{abraham2017flashpca2,prive2017efficient}.
-This also includes capturing Linkage Disequilibrium (LD) structure in PCA instead of population structure only \cite[]{price2008long,abdellaoui2013population,prive2017efficient}. This leads to e.g.\ an over-correction of GWAS variants within long-range LD regions [REWORD/PRECISE].
-Finally, another issue may arise when projecting PCs of a reference dataset to another study dataset: projected PCs are shrunk towards 0 in the new dataset \cite[]{lee2010convergence,wang2015improved,zhang2019fast}. This shrinkage makes it dangerous to use the projected PCs for analysis such as PC regression, ancestry detection and GWAS [REWORD/PRECISE].
+However, some pitfalls related to PCA of genotype data have been documented and not all of the currently available software addresses all of these. 
+In the following, we recall common pitfalls and explain when they are relevant.
+First, efficient methods for PCA use approximations, which can results in some lack of precision of computed PCs. This has been shown to be a possible issue for software such as FastPCA and PLINK 2.0, but not for FlashPCA2 and bigstatsr/bigsnpr \cite[]{abraham2017flashpca2,prive2017efficient}.
+Second, some of the PCs may capture LD structure rather than population structure \cite[]{price2008long,abdellaoui2013population,prive2017efficient}. Including PCs that capture LD as covariates in genetic analyses can lead to reduced power, e.g.\ for detecting genetic association within these LD regions in GWAS.  
+Third, another issue may arise when projecting PCs of a reference dataset to another study dataset: projected PCs are shrunk towards 0 in the new dataset \cite[]{lee2010convergence,wang2015improved,zhang2019fast}. This shrinkage makes it dangerous to use the projected PCs for analyses such as PC regression, ancestry detection and correction for ancestry.
+Finally, PC scores may capture outliers that are due to family structure, population structure or other reasons; it might be benificial to detect and remove these individuals to maximise the population structure captured by the PCA (in the case of removing a few outliers) or to restrict analyses to genetically homogeneous samples. 
 
-In this paper, we derive a new implementation of PCA that can be used directly on bed/bim/fam PLINK files with some missing values, which is available in R package bigsnpr v1.0.0. Then, we recall some of the pitfalls of PCA computation on genotype data and provide efficient solutions to these issues, such as accouting for LD structure in PCA, detecting outliers [NOT INTRODUCED BEFORE] and projecting PCs to another study sample without shrinkage bias.
+In this paper, we derive a new implementation of PCA that can be used directly on bed/bim/fam PLINK files with some missing values, which we make available in R package bigsnpr v1.0.0. Then, we recall some of the pitfalls of PCA computation on genotype data and provide efficient solutions to these issues. These includes accouting for LD structure in PCA, detecting outliers and projecting PCs to another study sample without shrinkage bias.
 
+[SHOULD ALSO TALK ABOUT PCADAPT AND LD]
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -121,24 +120,24 @@ In this paper, we derive a new implementation of PCA that can be used directly o
 
 \begin{table}[h]
 \centering
-\caption{Overview of existing methods. [TODO: ADD CITATIONS]} 
+\caption{Overview of existing methods. [TODO: ADD CITATIONS + RESOLVE QUESTIONS]} 
 \label{tab:method-overview}
 \begin{tabular}{|c|c|c|c|}
 \hline
 Analysis & Method / Software & Pros & Cons \\
 \hline
-\multirow{3}{*}{PCA} & bigstatsr / bigsnpr & \makecell{Fast and accurate + handle dosages \\ + thinning options directly included} & \makecell{Own format without missing values \\ (fast functions are available \\ for converting and imputing)} \\
- & FlashPCA2 & Fast and accurate & Not parallelised? \\
- & \makecell{PLINK 2.0 \\ (reimplementation of FastPCA)} & Very fast (AVX2 only?) & Not always 100\% accurate \\
+\multirow{3}{*}{PCA} & bigstatsr / bigsnpr \cite[]{prive2017efficient} & \makecell{Fast and accurate + handle dosages \\ + thinning options directly included} & \makecell{Own format without missing values \\ (fast functions are available \\ for converting and imputing)} \\
+ & FlashPCA2 \cite[]{abraham2017flashpca2} & Fast and accurate & Sequential implementation \\
+ & \makecell{PLINK 2.0 (reimplementation of FastPCA) \\ \cite[]{galinsky2016fast,chang2015second}} & Very fast (AVX2 only?) & \makecell{Not always 100\% accurate \\ \cite[]{abraham2017flashpca2,prive2017efficient}} \\
 \hline
-\makecell{Detection of \\ oultier samples} & \makecell{"6 SDs from the mean" \\ (EIGENSOFT)} & Simple & Assume Gaussian distritbution \\
+\makecell{Detection of \\ oultier samples} & \makecell{"6 SDs from the mean" \\ (EIGENSOFT, \cite{patterson2006population})} & Simple & Assume Gaussian distritbution \\
 \hline
-\makecell{Detection of \\ homogeneous \\ samples} & Aberrant & Robust & Only two statistics at once? \\
+\makecell{Detection of \\ homogeneous \\ samples} & Aberrant \cite[]{bellenguez2011robust} & Robust & Only two statistics at once? \\
 \hline
 \multirow{5}{*}{\makecell{Projection of \\ new individuals \\ onto reference \\ PCA space}} & Simple projection (multiplication by loadings) & Simple & Shrinkage biased \\
-  & Bias-adjusted projection & Independent of new samples & \makecell{Assume same shrinkage for all individuals \\ + model-based \\ + need all eigenvalues of reference} \\
-  & \makecell{Augmentation, Decomposition, \\ and Procrustes transformation (ADP)} & Accurate & Slow \\
-  & Online ADP (OADP) & Much faster than OADP & Does not work for related individuals \\ 
+  & Bias-adjusted projection \cite[]{dey2019asymptotic} & Independent of new samples & \makecell{Assume same shrinkage for all individuals \\ + model-based \\ + need all eigenvalues of reference} \\
+  & \makecell{Augmentation, Decomposition, \\ and Procrustes transformation \\ (ADP, \cite{wang2015improved})} & Accurate & Slow \\
+  & Online ADP (OADP, \cite{zhang2019fast}) & Much faster than ADP & Does not work for related individuals \\ 
 \hline
 \end{tabular}
 \end{table}
@@ -170,22 +169,26 @@ However, there are two pitfalls when using Tukey's rule. First, Tukey's rule ass
 To solve these two issues, we implement \texttt{tukey\_mc\_up} in R package bigutilsr and use it here, which accounts both for skewness and multiple testing by default.
 
 We remove the detected outlier variants, compute the PC scores and loadings again, and iterate until there is no detected outlier variant anymore.
-This procedure is implemented in function \texttt{bed\_autoSVD} or R package bigsnpr.
+This procedure is implemented in function \texttt{bed\_autoSVD} of R package bigsnpr.
 
-\subsection{Detecting outlier samples in PCA}
+\subsection{Detecting outlier samples in PCA \label{outlier-sample}}
 
-[REDO]
-
-We propose [BOF] different outlier detection techniques for PCA.
-
-
-For detecting outlier samples in PCA, we use the Local Outlier Factor (LOF) on PCs \cite[]{breunig2000lof}. To make it robust to the choice of the number of nearest neighbours (kNN), we take the maximum value of the statistic computed with kNN $\in$ \{4, 5, 6, 7, 8\}. We do not use larger values for `kNN' because it would remove small ancestry groups (e.g.\ composed of 10-15 people only). We make use of the fast K nearest neighbours implementation of R package nabor to implement the LOF statistic efficiently in our new R package bigutilsr \cite[]{elseberg2012comparison}.
+For detecting outlier samples in PCA, we use a modified version of the Probabilistic Local Outlier Factor (PLOF) statistic on PCs \cite[]{kriegel2009loop}. Using K nearest neighbours (KNN), this consists in comparing the distance from an point $j$ to its KNNs ($pd_j = \sqrt{\frac{1}{K} \sum_{k=1}^K d^2_{j \leftrightarrow j_k}}$, where $j_k$ is the $k$-th NN of $j$) with the distances from its KNNs to their KNNs ($\frac{1}{K} \sum_{k=1}^K pd_{j_k}$). The idea is that an outlier should be far from all other points, but this point is even more outlier if its KNNs are in a very dense cluster. 
+In practice, we use $pd_j / \sqrt{\frac{1}{K} \sum_{k=1}^K pd_{j_k}}$ (note the squared root) as it otherwise detect any point next to a very dense cluster as an outlier.
+We implement this statistic in function \texttt{prob\_dist} of our new R package bigutilsr. To make it fast, we use and parallelise (\texttt{knn\_parallel}) the fast K nearest neighbours implementation of R package nabor \cite[]{elseberg2012comparison}.
+Automatic detection of outliers is very hard, then we recommend users to choose a threshold of outlierness for this statistic based on visual inspection.
  
-For detecting samples that have a different ancestry from most of the samples in the data, we compute the pairwise orthogonalized Gnanadesikan-Kettenrin robust Mahalanobis distance of PCs \cite[]{gnanadesikan1972robust,maronna2002robust}, and do not include individuals whose log-distance is larger than some threshold determined based on visual inspection [DO IT AUTOMATIC?].
+For detecting samples that have a different ancestry from most of the samples in the data, we compute the pairwise orthogonalized Gnanadesikan-Kettenrin robust Mahalanobis distance on PC scores (Section \ref{maha}). We then restrict to individuals whose log-distance (alternatively p-value) is smaller (larger) than some threshold determined based on visual inspection.
 
 
 
-\subsection{Subsetted version of 1000G data [RENAME?]\label{1000G}}
+\subsection{Projecting PCs from a reference dataset \label{proj}}
+
+[SCHEME TO ILLUSTRATE OADP?]
+
+To project PCs of a reference dataset (e.g.\ 1000G) to a target genotype dataset, we implement the following 3 steps in function \texttt{bed\_projectPCA} of package bigsnpr: 1) matching the variants of each dataset, including removing ambiguous alleles [A/T] and [C/G], and matching strand and direction of the alleles; 2) computing PCA of the reference dataset using the matched variants only; 3) projecting computed PCs to the target data using an optimised implementation (see Supplementary Materials) of the Online Augmentation, Decomposition, and Procrustes (OADP) transformation \cite[]{zhang2019fast}.
+
+\subsection{Data\label{1000G}}
 
 We provide a subsetted version of the 1000 genomes (1000G) project data \cite[]{10002015global,meyer2019genotype}.
 Variants are restricted to the ones in common with HapMap3 and UK Biobank \cite[]{international2010integrating,bycroft2017genome}. 
@@ -195,18 +198,14 @@ This results in 2490 individuals of the 1000G project (phase 3) in PLINK bed/bim
 Resulting PLINK files and R code to generate these files are available at \url{https://doi.org/10.6084/m9.figshare.9208979.v3}. 
 To easily download these data, we provide a function called \texttt{download\_1000G} in R package bigsnpr.
 
-[SHOULD DESCRIBE QC FOR OTHER DATASETS TOO?]
+[REMOVE QC NA FOR 1000G?]
 
+[DESCRIBE QC FOR OTHER DATASETS TOO]
 
-\subsection{Projecting PCs from a reference dataset \label{proj}}
+\subsection{Reproducibility}
 
-[SCHEME TO ILLUSTRATE OADP?]
+[ALL CODE..]
 
-To project PCs of a reference dataset (e.g.\ 1000G) to a target genotype dataset, we implement the following 3 steps in function \texttt{bed\_projectPCA} of package bigsnpr: 1) matching the variants of each dataset, including removing ambiguous alleles [A/T] and [C/G], and matching strand and direction of the alleles; 2) computing PCA of the reference dataset using the matched variants only; 3) projecting computed PCs to the target data using an optimised implementation (see Supplementary Materials) of the Online Augmentation, Decomposition, and Procrustes (OADP) transformation \cite[]{zhang2019fast}.
-
-\subsection{Ancestry matching \label{ancestry}}
-
-We use the 1000 Genomes (1000G) Project data (section \ref{1000G}) to infer the ancestry of individuals from a study dataset following the following steps: 1) we compute the robust center and covariance parameters of the Mahalanobis distance (section \ref{maha}) for each of the 26 populations of the 10000G data; 2) we project individuals from the study dataset onto the PCA space computed using the 1000G data (section \ref{proj}); 3) we compute the Mahalanobis distance for each projected individual of the study data and each population of the 1000G data (using the center and covariance parameters computed previously); 4) we derive p-values from those distances, as they are approximately chi-squared distributed with the number of PCs used for computing the distances as degrees of freedom; 5) we affect each individual to the largest corresponding p-value (smallest distance), but discard individuals whose maximum p-value is less than 0.05 (i.e.\ individuals far from every population of the 1000G data). 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -221,31 +220,18 @@ We use the 1000 Genomes (1000G) Project data (section \ref{1000G}) to infer the 
 
 \subsection{Performance}
 
-To show that we provide very performant implementations of the different methods presented in this paper, we apply them to the UK Biobank. We use 20 physical cores for most of the computations.
+To show that we provide very fast implementations of the different methods presented in this paper, we apply them to the UK Biobank. We use 20 physical cores for most of the computations.
 It takes 22 minutes to perform a first phase of clumping on 406,545 unrelated individuals genotyped over 504,139 variants, which reduces the number of variants to 261,307. It then takes 34 minutes to compute the first 20 PCs using these 261,307 variants.
 If performing the automatic procedure for LD detection, it takes 5 hours to perform the initial clumping step, 6 computation of PCs and 5 outlier variant detection (i.e.\ 5 iterations of outlier detection and one final computation of PCs).
 
-It takes 8 minutes to match the 1000G data to the UKBB data and compute 20 PCs of the 1000G data using the automatic outlier detection technique. It takes 12 minutes more to do the OADP projection of all 488,371 individuals of the UKBB data to the PCA computed using the 1000G data. Once projections are available, et takes only a couple minutes to perform the ancestry estimation.
+It takes 8 minutes to match the 1000G data to the UKBB data and compute 20 PCs of the 1000G data using the automatic LD detection technique. It takes 12 minutes more to do the OADP projection of all 488,371 individuals of the UKBB data to the PCA computed using the 1000G data.
 
-Finally, it took only 6 minutes to compute the 30-Nearest Neighbours of PC scores for all UK Biobank individuals.
+Finally, it takes only 6 minutes to compute the 30-Nearest Neighbours of PC scores for all UK Biobank individuals, which is the main computational aspect of computing statistics for detection individual outlier samples (Section \ref{outlier-sample}).
 
-
-\subsection{PCA of the UK Biobank}
-
-Principal Components (PC) loadings reported by the UK Biobank clearly show that PC19 to PC40 capture LD structure, which is also the case for PC16 and PC18, although less pronounced (see peaks in figure \ref{fig:UKBB-loadings40}). 
-Moreover, our automatic procedure removing long-range LD regions did not converge after 5 iterations, meaning that it kept detecting long-range LD regions at each iteration. Therefore, we were able to capture only 16 PCs that shows population stratification and not LD structure (Figures \ref{fig:UKBB-screeplot}, \ref{fig:UKBB-scores} and \ref{fig:UKBB-loadings}).
-
-\noindent[SHOW INITIAL PC SCORES OF UKBB?]
-
-\noindent[COMPUTE MAHA ON LOADINGS TO SHOW THE PEAKS SUMMARIZED IN ALL 16-18 PCS?]
-
-\noindent[SHOW THAT PROCEDURE IS OKAY FOR SMALLER DATASETS?]
-
-\noindent[SHOW ABLE TO RECONSTRUCT PCA? MAYBE NOT PC17]
 
 \subsection{Projecting PCs from a reference dataset}
 
-We use 60\% of individuals in the 1000G data (section \ref{1000G}) to compute the PCA ($K=20$ PCs) [EXPLICIT SAMPLE SIZE]. Then, we project the remaining 40\% individuals using three methods: 1/ simply multiplying the genotypes of these individuals by the previously computed loadings, 2/ correcting the simple projections using asymptotic shrinkage factors as determined by R package hdpca v1.0.0 \cite[]{dey2019asymptotic} and 3/ the OADP projection (section \ref{proj}). 
+We use 60\% of individuals in the 1000G data (section \ref{1000G}) to compute the PCA ($K=20$ PCs) [EXPLICIT SAMPLE SIZE]. Then, we project the remaining 40\% individuals using three methods: 1/ simply multiplying the genotypes of these individuals by the previously computed loadings, 2/ correcting the simple projections using asymptotic shrinkage factors as determined by R package hdpca v1.1.3 \cite[]{dey2019asymptotic} and 3/ the OADP projection (section \ref{proj}). 
 When simply projecting using loadings, there is no apparent shrinkage for PC1 and PC2, a weak [REWORD?] shrinkage for PC3 and PC4, and a large shrinkage for PC5 to PC8 (Figure \ref{fig:proj1000G}). [USE VALUES?]
 In contrast, there is no apparent shrinkage when projecting new individuals with OADP (Figure \ref{fig:proj1000G}).
 Simple projection is affected even more by this shrinkage for PC9 to PC20, while OADP appears free of this issue (Figure \ref{fig:proj1000G-2}).
@@ -264,77 +250,24 @@ Blue points are the 40\% remaining individuals, projected using the Online Augme
 
 When computing the PCA on the UK Biobank using 406,545 unrelated individuals and 171,977 variants, and projecting the 1000G data onto this reference PCA space, shrinkage is much smaller ($\leq 1.08$ for all 20 first PCs, Figure \ref{fig:proj1000G-6}).
 
-\subsection{Ancestry matching}
 
-[REDO WITH OUTLIER REMOVAL?]
 
-We performed ancestry estimation of the individuals in the UK Biobank using the 1000G data (Section \ref{ancestry}), discarding individuals with unknown ancestry or mixed ancestry.
-We used from PC1 to PC14 and PC16 based on visual inspection of PC scores (Figure \ref{fig:PC-1000G-UKBB}).
-We did not infer ancestry for 15.9\% of UK Biobank that had a maximum p-value smaller than 0.05 (Figure \ref{fig:ancestry-pval}). 
-More precisely, among ``White'', ``British'' and ``Irish'' ancestries, this represented respectively 20.2\%, 11.1\% and 20.3\%, while this represented between 44.5\% (``Chinese'') and 74.3\% (``Bangladeshi'') for other populations. 
-In other words, 3 out of 4 of the UK Biobank individual who self-reports as ``Bangladeshi'' could not be attributed to any 1000G population, although 1000G data includes several ``Bengali in Bangladesh'' (SAS\_BEB).
-Only 10 people out of 401,048 were wrongly classified in ``super'' population of the 1000G; e.g.\ one Chinese person was classified as European by our method (Table \ref{tab:ancestry-pred}). 
-Moreover, our method is able to accurately differentiate between sub-continental populations such as differentiating between Pakistani, Bangladeshi and Chinese people (Table \ref{tab:ancestry-pred}).
+\subsection{PCA of the UK Biobank}
 
-% latex table generated in R 3.6.0 by xtable 1.8-4 package
-% Mon Oct 21 15:14:34 2019
-\begin{table}[ht]
-\centering
-\caption{Self-reported ancestry (top) of UKBB individuals and their matching to 1000G populations (left) by our method. See the description of 1000G populations at \url{https://www.internationalgenome.org/category/population/}.} 
-\label{tab:ancestry-pred}
-\begin{tabular}{|l|c|c|c|c|c|c|c|c|c|c|c|c|c|}
-  \hline
- & British & Irish & White & Other White & Indian & Pakistani & Bangladeshi & Chinese & Other Asian & Caribbean & African & Other Black & NA \\ 
-  \hline
-AFR\_ACB &  &  &  &  &  &  &  &  &  & 1832 & 580 & 31 & 259 \\ 
-  AFR\_ASW &  &  &  &  &  &  &  &  &  & 315 & 13 & 10 & 39 \\ 
-  AFR\_ESN &  &  &  &  &  &  &  &  &  &  & 155 & 1 & 29 \\ 
-  AFR\_GWD &  &  &  &  &  &  &  &  &  &  & 20 &  & 4 \\ 
-  AFR\_LWK &  &  &  &  &  &  &  &  &  &  & 34 &  & 4 \\ 
-  AFR\_MSL &  &  &  &  &  &  &  &  &  &  & 26 &  &  \\ 
-  AFR\_YRI &  &  &  &  &  &  &  &  &  & 5 & 469 & 3 & 81 \\ 
-   \hline
-AMR\_CLM & 1 &  &  & 50 &  &  &  &  &  &  &  &  & 142 \\ 
-  AMR\_MXL &  &  & 1 & 3 &  &  &  &  &  &  &  &  & 20 \\ 
-  AMR\_PEL &  &  &  & 2 &  &  &  &  &  &  &  &  & 19 \\ 
-   \hline
-EAS\_CDX &  &  &  &  &  &  &  & 2 &  &  &  &  & 1 \\ 
-  EAS\_CHB & 1 &  &  &  &  &  &  & 445 & 10 &  &  &  & 7 \\ 
-  EAS\_CHS &  &  &  &  &  &  &  & 380 & 9 &  &  &  & 21 \\ 
-  EAS\_JPT &  &  &  &  &  &  &  & 3 & 25 &  &  &  & 122 \\ 
-  EAS\_KHV &  &  &  &  &  &  &  & 4 & 16 &  &  &  & 22 \\ 
-   \hline
-EUR\_CEU & 325725 & 6675 & 350 & 4855 &  &  &  & 1 &  &  &  &  & 1363 \\ 
-  EUR\_FIN & 2 &  &  & 118 &  &  &  &  &  &  &  &  & 1 \\ 
-  EUR\_GBR & 57497 & 3486 & 79 & 454 &  &  &  &  &  &  & 1 &  & 244 \\ 
-  EUR\_IBS & 28 &  & 4 & 452 &  &  &  &  &  &  &  &  & 8 \\ 
-  EUR\_TSI & 25 &  & 1 & 177 &  &  &  &  &  &  &  &  & 5 \\ 
-   \hline
-SAS\_BEB &  &  &  &  & 11 &  & 57 &  &  &  &  &  & 7 \\ 
-  SAS\_GIH &  &  &  &  & 334 &  &  &  & 1 &  &  &  & 4 \\ 
-  SAS\_ITU & 1 &  &  &  & 314 & 1 &  &  & 264 & 3 &  &  & 82 \\ 
-  SAS\_PJL & 1 &  &  &  & 1749 & 767 &  &  & 104 & 2 &  &  & 177 \\ 
-  SAS\_STU &  &  &  &  & 38 &  &  &  & 185 &  &  &  & 40 \\ 
-   \hline
-NA & 47748 & 2594 & 110 & 9705 & 3270 & 980 & 164 & 669 & 1133 & 2140 & 1906 & 73 & 6970 \\ 
-   \hline
-\end{tabular}
-\end{table}
+Principal Components (PC) loadings reported by the UK Biobank clearly show that PC19 to PC40 capture LD structure, which is also the case for PC16 and PC18, although less pronounced (see peaks in figure \ref{fig:UKBB-loadings40}). 
+Moreover, our automatic procedure removing long-range LD regions did not converge after 5 iterations, meaning that it kept detecting long-range LD regions at each iteration. Therefore, we were able to capture only 16 PCs that shows population stratification and not LD structure (Figures \ref{fig:UKBB-screeplot}, \ref{fig:UKBB-scores} and \ref{fig:UKBB-loadings}).
 
-\noindent[OKAY TO CLASSIFY SOME OTHER WHITE AS CENTRAL/SOUTH AMERICANS?]
- 
-\noindent[INCLUDE RESULTS FOR SIMPLE PROJ? -> HIST PVAL BAD -> 38\% NOT MATCHED, ESP PAKISTANI] 
+Then, we computed again PCA after restricting the individuals included in the computations: we randomly subsampled UKBB data to use only 10,000 British individuals (out of 431,029) and to 5000 Irish individuals (out of 12,755), while keeping all individuals with other self-reported individuals. 
+We further removed all individuals for all pairs of related individuals reported by the UKBB. 
+This resulted in 48,942 individuals that we used to compute 50 PCs in less than 3 hours using function \texttt{bed\_autoSVD}. 
 
-We also projected individuals using the OADP projection and then applied our ancestry detection technique to other datasets. 
-When applied to the European individuals of the POPRES data \cite[]{nelson2008population}, we show that 56.5\% of individuals could not be matched to one of the 26 populations of the 1000G data (Table \ref{tab:ancestry-pred-popres}). 
-This is particularly dramatic for all East-Europeans, whose only 11 people could be matched out of 179 (6.1\%).
-Moreover, even though 1000G data include several ``Toscani in Italia'' (EUR\_TSI), we were able to match 14.2\% of Italians only.
-Nevertheless, for individuals that we could match, they were all identified as European ancestry. We could also identify accurately sub-regions of Europe; e.g.\ all Spanish and Portugese individuals that we could match (73.1\%) were identified as ``Iberian Population in Spain'' (EUR\_IBS, Table \ref{tab:ancestry-pred-popres}).
-Finally, we also projected and matched people from a case-control cohort for celiac disease composed of four European countries: Italy, the Netherlands, the UK and Finland \cite[]{dubois2010multiple}. 
-Among UK individuals, 5397 (79.9\%) were matched to either ``Utah Residents with Northern and Western European Ancestry'' (EUR\_CEU) or ``British in England and Scotland'' (EUR\_GBR), 10 (0.2\%) to other European populations, 1 to ``Mexican Ancestry from Los Angeles USA'' (AMR\_MXL) and 1346 (19.9\%) could not be matched (Table \ref{tab:ancestry-pred-celiac}).
-Among Finns, 1543 (62.4\%) were matched to ``Finnish in Finland'' (EUR\_FIN), 6 (0.3\%) to other European populations, and 922 (37.3\%) could not be matched.
-Among Italians, 229 (22\%) were matched to EUR\_TSI, 15 (1.5\%) to EUR\_IBS and 795 (76.5\%) could not be matched (Table \ref{tab:ancestry-pred-celiac}).
+\noindent[SHOW INITIAL PC SCORES OF UKBB?]
 
+\noindent[COMPUTE MAHA ON LOADINGS TO SHOW THE PEAKS SUMMARIZED IN ALL 16-18 PCS?]
+
+\noindent[SHOW THAT PROCEDURE IS OKAY FOR SMALLER DATASETS?]
+
+\noindent[SHOW ABLE TO RECONSTRUCT PCA? MAYBE NOT PC17]
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -343,14 +276,7 @@ Among Italians, 229 (22\%) were matched to EUR\_TSI, 15 (1.5\%) to EUR\_IBS and 
 
 \noindent[LIMITATION 1: RUN MULTIPLE TIMES / FAIL TO SPEED UP]
 
-\noindent[LIMITATION 2: FAIL TO PROJECT RELATED INDIVIDUALS WITH OADP.]
-
-\noindent[LIMITATION 3: FAIL TO AUTOMATICALLY DETECT OUTLIER SAMPLES.]
-
-\noindent[DISCUSS LACK OF CERTAIN POPULATIONS IN 1000G]
-
-\noindent[DISCUSS ABOUT $K''=K'=K$? FASTER, EASIER, DO NOT WANT MORE DIM?]
-
+\noindent[LIMITATION 2: FAIL TO PROJECT RELATED INDIVIDUALS WITH OADP -> RESTRICT MORE.]
 
 
 \subsection{Conclusion}
@@ -367,6 +293,13 @@ Among Italians, 229 (22\%) were matched to EUR\_TSI, 15 (1.5\%) to EUR\_IBS and 
 \section*{Acknowledgements}
 
 This research has been conducted using the UK Biobank Resource under Application Number 25589.
+
+\section{Declaraction of Interests}
+
+
+As competing interest, you can write
+Michael Blum is an employee at OWKIN.
+
 
 ~\\ \textit{Conflict of Interest:} none declared.
 
