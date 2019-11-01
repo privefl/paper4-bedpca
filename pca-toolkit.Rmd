@@ -136,6 +136,18 @@ knitr::include_graphics("figures/UKBB-PC1-20.png")
 
 ---
 
+## Computing PCs using a subset of individuals
+
+When restricting British to 10K and Irish to 5K: capturing at least 40 PCs!
+
+<br>
+
+```{r, out.width="95%"}
+knitr::include_graphics("figures/UKBB-scores-restricted.png")
+```
+
+---
+
 ## Detection of outlier samples in 1000G
 
 Method: compare density around point with density around its K-Nearest Neighbours.
@@ -190,40 +202,6 @@ PCA on 60% of 1000G (**black**) / OADP projection on same 60% (**blue**):
 
 ```{r, out.width="75%"}
 knitr::include_graphics("figures/proj1000G-related.svg")
-```
-
----
-
-## Ancestry matching
-
-Method: Robust Mahalanobis distance for each reference population    
-\+ minimum distance (or maximum p-value).
-
-```{r, out.width="65%"}
-knitr::include_graphics("figures/us.svg")
-```
-
----
-
-## Ancestry matching
-
-Matching POPRES populations to 1000G populations    
-(do not match maximum p-values < 0.05):
-
-
-```{r, out.width="90%"}
-knitr::include_graphics("figures/ancestry-popres.png")
-```
-
----
-
-## Ancestry matching
-
-Matching UKBB populations to 1000G populations (20 minutes)  
-(do not match maximum p-values < 0.05):
-
-```{r, out.width="98%"}
-knitr::include_graphics("figures/ancestry-UKBB.png")
 ```
 
 ---

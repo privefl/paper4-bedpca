@@ -124,6 +124,16 @@ Method: Robust Mahalanobis distance on PC loadings + Gaussian Smoothing = removi
 
 ---
 
+## Computing PCs using a subset of individuals
+
+When restricting British to 10K and Irish to 5K: capturing at least 40 PCs!
+
+&lt;br&gt;
+
+&lt;img src="figures/UKBB-scores-restricted.png" width="95%" style="display: block; margin: auto;" /&gt;
+
+---
+
 ## Detection of outlier samples in 1000G
 
 Method: compare density around point with density around its K-Nearest Neighbours.
@@ -169,34 +179,6 @@ PCA on 60% of 1000G (**black**) / OADP projection on remaining 40% (**blue**):
 PCA on 60% of 1000G (**black**) / OADP projection on same 60% (**blue**):
 
 &lt;img src="figures/proj1000G-related.svg" width="75%" style="display: block; margin: auto;" /&gt;
-
----
-
-## Ancestry matching
-
-Method: Robust Mahalanobis distance for each reference population    
-\+ minimum distance (or maximum p-value).
-
-&lt;img src="figures/us.svg" width="65%" style="display: block; margin: auto;" /&gt;
-
----
-
-## Ancestry matching
-
-Matching POPRES populations to 1000G populations    
-(do not match maximum p-values &lt; 0.05):
-
-
-&lt;img src="figures/ancestry-popres.png" width="90%" style="display: block; margin: auto;" /&gt;
-
----
-
-## Ancestry matching
-
-Matching UKBB populations to 1000G populations (20 minutes)  
-(do not match maximum p-values &lt; 0.05):
-
-&lt;img src="figures/ancestry-UKBB.png" width="98%" style="display: block; margin: auto;" /&gt;
 
 ---
 
