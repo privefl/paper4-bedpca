@@ -15,3 +15,4 @@ paper*.pdf
 data
 code/project-us-to-POPRES.R
 tmp-results
+tmp-code

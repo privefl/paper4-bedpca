@@ -6,9 +6,7 @@ obj.bed <- bed(bedfile.ref)
 
 set.seed(1); train <- sample(nrow(obj.bed), 0.6 * nrow(obj.bed))
 
-# obj.svd <- bed_autoSVD(obj.bed, ind.row = train, k = 20, ncores = nb_cores())
-# saveRDS(obj.svd, "tmp-data/SVD_1000G.rds")
-obj.svd <- readRDS("tmp-data/SVD_1000G.rds")
+obj.svd <- bed_autoSVD(obj.bed, ind.row = train, k = 20, ncores = nb_cores())
 
 test <- bed_projectSelfPCA(obj.svd, obj.bed,
                            ind.row = rows_along(obj.bed)[-train],
