@@ -47,7 +47,7 @@ system.time(
   proj <- bed_projectSelfPCA(obj.svd, obj.bed,
                              ind.row = rows_along(obj.bed)[-ind.train],
                              ncores = nb_cores())
-) # 41 min
+) # 21 min
 proj1 <- proj$simple_proj
 proj2 <- proj$OADP_proj
 

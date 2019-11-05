@@ -8,8 +8,7 @@ obj.bed <- bed("data/ukbb_bed/ukbb_488282.bed")
 system.time(
   obj.svd <- bed_autoSVD(obj.bed, ind.row = ind.row, k = 20, ncores = nb_cores())
 ) # 5h
-saveRDS(obj.svd, "tmp-results/SVD_UKBB.rds")
-# Phase of clumping (on MAC) at r^2 > 0.2.. keep 261307 variants.
+# Phase of clumping (on MAC) at r^2 > 0.2.. keep 261306 variants.
 # Discarding 0 variant with MAC < 10.
 #
 # Iteration 1:
@@ -19,22 +18,22 @@ saveRDS(obj.svd, "tmp-results/SVD_UKBB.rds")
 #
 # Iteration 2:
 # Computing SVD..
-# 4550 outlier variants detected..
+# 4549 outlier variants detected..
 # 11 long-range LD regions detected..
 #
 # Iteration 3:
 # Computing SVD..
-# 3882 outlier variants detected..
+# 3881 outlier variants detected..
 # 11 long-range LD regions detected..
 #
 # Iteration 4:
 # Computing SVD..
-# 3832 outlier variants detected..
+# 3839 outlier variants detected..
 # 15 long-range LD regions detected..
 #
 # Iteration 5:
 # Computing SVD..
-# 5500 outlier variants detected..
+# 5488 outlier variants detected..
 # 17 long-range LD regions detected..
 #
 # Iteration 6:
@@ -44,7 +43,7 @@ saveRDS(obj.svd, "tmp-results/SVD_UKBB.rds")
 system.time(
   ind.keep2 <- bed_clumping(obj.bed, ind.row = ind.row, ncores = nb_cores())
 ) # 22 min
-length(ind.keep2)  # 261307
+length(ind.keep2)  # 261,306
 
 system.time(
   obj.svd2 <- bed_randomSVD(obj.bed, ind.row = ind.row, ind.col = ind.keep2,

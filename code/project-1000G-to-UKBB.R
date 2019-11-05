@@ -11,7 +11,7 @@ system.time(
   test <- bed_projectPCA(bed.ref, obj.bed, ind.row.ref = ind.row,
                          k = 20, ncores = nb_cores())
 ) # 4.4 H
-length(attr(test$obj.svd.ref, "subset")) # 171977
+length(attr(test$obj.svd.ref, "subset")) # 171,987
 
 PC.ref <- predict(test$obj.svd.ref)
 proj1 <- test$simple_proj
@@ -46,24 +46,3 @@ plot_grid(plotlist = lapply(1:8, function(k) {
 }), nrow = 4)
 
 # ggsave("figures/proj1000G-UKBB2.png", width = 10, height = 7)
-
-library(bigreadr)
-## Self-reported ancestry (https://biobank.ctsu.ox.ac.uk/crystal/coding.cgi?id=1001)
-code_ancestry <- fread2("data/coding1001.tsv")
-csv <- "data/ukb22544.csv"
-library(dplyr)
-df0 <- fread2(csv, select = c("eid", "21000-0.0", "22006-0.0"),
-              col.names = c("eid", "pop", "is_caucasian")) %>%
-  mutate(
-    pop  = factor(pop, levels = code_ancestry$coding,
-                  labels = code_ancestry$meaning),
-    is_caucasian = as.logical(is_caucasian)
-  )
-
-eid <- bed.ref$fam$sample.ID[ind.row[PC.ref[, 6] > -50 & PC.ref[, 5] < -10]]
-pop_UKBB <- df0$pop[match(eid, df0$eid)]
-table(pop_UKBB)
-
-
-fam2 <- bigreadr::fread2("data/1000G_phase3_common_norel.fam2")
-fam2$Population[proj2[, 6] > -50 & proj2[, 5] < -10]
