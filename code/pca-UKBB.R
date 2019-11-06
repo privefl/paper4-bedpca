@@ -1,5 +1,8 @@
 library(bigsnpr)
 library(bigreadr)
+library(dplyr)
+library(ggplot2)
+
 rel <- fread2("data/ukb25589_rel_s488346.dat")
 fam <- fread2("data/ukbb_bed/ukbb_488282.fam")
 ind.row <- which(!fam$V2 %in% rel$ID2)
@@ -40,6 +43,8 @@ system.time(
 # Computing SVD..
 # Maximum number of iterations reached.
 
+# saveRDS(obj.svd, "tmp-results/SVD_UKBB.rds")
+
 system.time(
   ind.keep2 <- bed_clumping(obj.bed, ind.row = ind.row, ncores = nb_cores())
 ) # 22 min
@@ -57,8 +62,26 @@ plot(obj.svd)
 plot(obj.svd, type = "loadings", loadings = 1:20, coeff = 0.4)
 # ggsave("figures/UKBB-loadings.pdf", width = 13, height = 7)
 
-plot(obj.svd, type = "scores", scores = 1:20, coeff = 0.4, ncol = 5)
-# ggsave("figures/UKBB-PC1-20.png", width = 9, height = 7)
+## Self-reported ancestry (https://biobank.ctsu.ox.ac.uk/crystal/coding.cgi?id=1001)
+code_ancestry <- fread2("data/coding1001.tsv")
+csv <- "data/ukb22544.csv"
+df0 <- fread2(csv, select = c("eid", "21000-0.0", "22006-0.0"),
+              col.names = c("eid", "pop", "is_caucasian")) %>%
+  mutate(
+    pop  = factor(pop, levels = code_ancestry$coding,
+                  labels = code_ancestry$meaning),
+    is_caucasian = as.logical(is_caucasian)
+  )
+pop_UKBB <- df0$pop[match(obj.bed$fam$sample.ID, df0$eid)]
+table(pop_UKBB)
+
+plot_grid(plotlist = lapply(1:10, function(k) {
+  plot(obj.svd, type = "scores", scores = 2 * k - 1:0, coeff = 0.5) +
+    aes(color = pop_UKBB[ind.row]) +
+    theme(legend.position = "none")
+}), ncol = 5)
+# ggsave("figures/UKBB-PC1-20.png", width = 11, height = 8)
+
 
 # Benchmark KNN
 PCs <- predict(obj.svd)
