@@ -6,8 +6,17 @@ library(ggplot2)
 obj.bed <- bed(download_1000G("tmp-data"))
 obj.svd <- bed_autoSVD(obj.bed, k = 20, ncores = nb_cores())
 
-prob <- bigutilsr::prob_dist(obj.svd$u)
-hist(S <- prob$dist.self / sqrt(prob$dist.nn))
+prob <- bigutilsr::prob_dist(obj.svd$u, ncores = nb_cores())
+S <- prob$dist.self / sqrt(prob$dist.nn)
+
+ggplot() +
+  geom_histogram(aes(S), color = "#000000", fill = "#000000", alpha = 0.5) +
+  scale_x_continuous(breaks = 0:5 / 5, limits = c(0, NA)) +
+  scale_y_sqrt(breaks = c(10, 100, 500)) +
+  theme_bigstatsr() +
+  labs(x = "Statistic of outlierness", y = "Frequency (sqrt-scale)")
+
+# ggsave("figures/hist-outliers-1000G.pdf", width = 9, height = 6)
 
 plot_grid(plotlist = lapply(7:10, function(k) {
   plot(obj.svd, type = "scores", scores = 2 * k - 1:0, coeff = 0.6) +
@@ -17,34 +26,39 @@ plot_grid(plotlist = lapply(7:10, function(k) {
 
 # ggsave("figures/outliers-1000G.pdf", width = 7, height = 5)
 
-
-#### Restricting to homogeneous individuals ####
-
-obj.bed <- bed("~/Bureau/Dubois2010_data/FinnuncorrNLITUK3hap550_QC.bed")
-obj.svd <- bed_autoSVD(obj.bed, k = 10, ncores = nb_cores())
-
-plot(obj.svd, type = "scores", scores = 1:10, coeff = 0.7)
-
-dist <- bigutilsr::covRob(obj.svd$u, estim = "pairwiseGK")$dist
-pval <- pchisq(dist, df = 10, lower.tail = FALSE)
-
-# Get population from external files
-pop.files <- list.files(path = "~/Bureau/Dubois2010_data/",
-                        pattern = "cluster_*", full.names = TRUE)
-pop <- snp_getSampleInfos(obj.bed, pop.files)[[1]]
-pop_celiac <- c("Netherlands", "Italy", "UK", "UK", "Finland")[pop]
-
-library(ggplot2)
-plot_grid(plotlist = lapply(1:2, function(k) {
-  plot_grid(
-    plot(obj.svd, type = "scores", scores = 2 * k - 1:0, coeff = 0.7) +
-      aes(color = pop_celiac) +
-      labs(color = "Population"),
-    plot(obj.svd, type = "scores", scores = 2 * k - 1:0, coeff = 0.7) +
-      aes(color = pval < 0.001) +
-      scale_colour_viridis_d(),
-    ncol = 1
-  )
+plot_grid(plotlist = lapply(7:10, function(k) {
+  plot(obj.svd, type = "scores", scores = 2 * k - 1:0, coeff = 0.6) +
+    aes(color = S > 0.4) +
+    scale_colour_viridis_d()
 }), scale = 0.95)
 
-# ggsave("figures/homogeneous.pdf", width = 8, height = 6)
+# ggsave("figures/be-outlier-1000G.pdf", width = 7, height = 5)
+
+library(magrittr)
+S2 <- apply(obj.svd$u, 2, function(x) abs(x - mean(x)) / sd(x)) %>%
+  apply(1, max)
+
+ggplot() +
+  geom_histogram(aes(S2), color = "#000000", fill = "#000000", alpha = 0.5) +
+  scale_y_sqrt(breaks = c(10, 100, 500)) +
+  theme_bigstatsr() +
+  labs(x = "Statistic of outlierness", y = "Frequency (sqrt-scale)") +
+  geom_vline(xintercept = 6, color = "red")
+
+# ggsave("figures/hist-outliers2-1000G.pdf", width = 9, height = 6)
+
+plot_grid(plotlist = lapply(7:10, function(k) {
+  plot(obj.svd, type = "scores", scores = 2 * k - 1:0, coeff = 0.6) +
+    aes(color = S2) +
+    scale_colour_viridis_c(trans = "log", breaks = c(1, 3, 6, 20))
+}), scale = 0.95)
+
+# ggsave("figures/outliers2-1000G.pdf", width = 7, height = 5)
+
+plot_grid(plotlist = lapply(7:10, function(k) {
+  plot(obj.svd, type = "scores", scores = 2 * k - 1:0, coeff = 0.6) +
+    aes(color = S2 > 6) +
+    scale_colour_viridis_d()
+}), scale = 0.95)
+
+# ggsave("figures/be-outlier2-1000G.pdf", width = 7, height = 5)
