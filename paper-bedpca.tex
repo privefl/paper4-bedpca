@@ -114,6 +114,7 @@ Finally, PC scores may capture outliers that are due to family structure, popula
 
 In this paper, we derive a new implementation of PCA that can be used directly on bed/bim/fam PLINK files with some missing values, which we make available in a new release of R package bigsnpr (v1.0.0). Then, we recall some of the pitfalls of PCA computation on genotype data and provide efficient solutions to these issues, which we implement in R packages bigsnpr and bigutilsr. These includes accouting for LD structure in PCA, detecting outliers and projecting PCs to another study sample without shrinkage bias.
 
+\noindent[ADD: implement for bed files with missing values (as opposed to a complete analysis with bigstatsr/bigsnpr), because useful on its own (and can be use only genotyped SNPs).]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -123,24 +124,24 @@ In this paper, we derive a new implementation of PCA that can be used directly o
 \renewcommand*{\arraystretch}{2}
 \begin{table}[h]
 \centering
-\caption{Overview of existing methods. [TODO: ADD CITATIONS + RESOLVE QUESTIONS]} 
+\caption{Overview of existing methods.} 
 \label{tab:method-overview}
 \begin{tabular}{|c|c|c|c|}
 \hline
-Analysis & Method / Software & Pros & Cons \\
+Analysis & Method and/or Software & Pros & Cons \\
 \hline
 \multirow{3}{*}{PCA} & bigstatsr / bigsnpr \cite[]{prive2017efficient} & \makecell{Fast and accurate + handle dosages \\ + thinning options directly included} & \makecell{Own format without missing values \\ (fast functions are available \\ for converting and imputing)} \\
  & FlashPCA2 \cite[]{abraham2017flashpca2} & Fast and accurate & Sequential implementation \\
- & \makecell{PLINK 2.0 (reimplementation of FastPCA) \\ \cite[]{galinsky2016fast,chang2015second}} & Very fast (AVX2 only?) & \makecell{Not always 100\% accurate \\ \cite[]{abraham2017flashpca2,prive2017efficient}} \\
+ & \makecell{PLINK 2.0 (reimplementation of FastPCA) \\ \cite[]{galinsky2016fast,chang2015second}} & Fast & \makecell{Possible lack of accuracy \\ \cite[]{abraham2017flashpca2,prive2017efficient}} \\
 \hline
-\makecell{Detection of \\ oultier samples} & \makecell{"6 SDs from the mean" \\ (EIGENSOFT, \cite{patterson2006population})} & Simple & Assume Gaussian distritbution \\
+\makecell{Detection of \\ oultier samples} & \makecell{``6 SDs from the mean'' \\ in EIGENSOFT \cite[]{patterson2006population}} & Simple & Assume Gaussian distritbution \\
 \hline
-\makecell{Detection of \\ homogeneous \\ samples} & Aberrant \cite[]{bellenguez2011robust} & Robust & Only two statistics at once \\
+\makecell{Detection of \\ homogeneous \\ samples} & R package aberrant \cite[]{bellenguez2011robust} & Robust & Only two statistics at once \\
 \hline
 \multirow{5}{*}{\makecell{Projection of \\ new individuals \\ onto reference \\ PCA space}} & Simple projection (multiplication by loadings) & Simple & Shrinkage biased \\
-  & Bias-adjusted projection \cite[]{dey2019asymptotic} & Independent of new samples & \makecell{Assume same shrinkage for all individuals \\ + model-based \\ + need all eigenvalues of reference} \\
-  & \makecell{Augmentation, Decomposition, \\ and Procrustes transformation \\ (ADP, \cite{wang2015improved})} & Accurate & Slow \\
-  & Online ADP (OADP, \cite{zhang2019fast}) & Much faster than ADP & Does not work for related individuals \\ 
+  & Bias-adjusted projection in R package hdpca \cite[]{dey2019asymptotic} & Independent of new samples & \makecell{Assume same shrinkage for all individuals \\ + model-based \\ + need all eigenvalues of reference} \\
+  & \makecell{Augmentation, Decomposition and Procrustes transformation \\ (ADP) in LASER 2.0 \cite[]{wang2015improved}} & Accurate & Slow (a new PCA for each new sample) \\
+  & Online ADP (OADP) in python package FRAPOSA \cite[]{zhang2019fast} & Much faster than ADP & \makecell{Does not work for related individuals} \\ 
 \hline
 \end{tabular}
 \end{table}
@@ -151,7 +152,9 @@ Analysis & Method / Software & Pros & Cons \\
 When there is no missing value, we compute the partial Singular Value Decomposition (SVD) $U \Delta V^T$ of the scaled genotype matrix $\tilde{G}_{i,j} = \frac{G_{i,j} - 2 \hat{f_j}}{\sqrt{2 \hat{f_j} (1 - \hat{f_j})}}$ where $G_{i,j}$ is the allele count (genotype) of individual $i$ and variant $j$, and $\hat{f_j}$ is the estimated allele frequency of variant $j$ ($2 \hat{f_j}$ is the mean allele count of variant $j$). Then, $U \Delta$ are the first $K$ PC scores and $V$ are the first $K$ PC loadings, where $K$ is the number of PCs computed (e.g.\ $K=20$).
 
 When there is some missing values, we compute the partial SVD similarly, except that missing values are replaced by the variant means (i.e.\ $G_{i,j} - 2 \hat{f_j} = 0$ when $G_{i,j}$ is missing) and  the $\hat{f_j}$ for each variant are estimated using only non missing values of each variant.
-Note that this decomposition is equivalent to the decomposition presented above after imputation by the variant means [SURE?].
+Note that this decomposition is equivalent to the decomposition presented above after imputation by the variant means.
+
+To compute this decomposition easily and efficiently, we implement an accessor that memory-map the bed file to use it directly as if it were a standard matrix. Then, we apply the same algorithm for partial SVD that is used in R package bigstatsr \cite[]{prive2017efficient}.
 
 \subsection{Robust Mahalanobis distance \label{maha}}
 
@@ -165,19 +168,20 @@ For detecting outlier variants in PCA that are due to long-range Linkage Disequi
 We first apply a first round of clumping, prioritising variants by higher minor allele count, at e.g.\ $r^2$ > 0.2.
 Then, we compute $K$ PC scores and loadings.
 To summarise the contribution of each variant in all $K$ PC loadings, we compute the robust Mahalanobis distances (Section \ref{maha}) of these PC loadings.  
-This captures both population-differentiating variants as well as long-range LD regions; to capture consecutive outliers that corresponds to long-range LD regions, we apply a Gaussian smoothing to these statistics.
+To capture consecutive outliers that corresponds to long-range LD regions, we apply a Gaussian smoothing to these statistics.
 
 Finally, to choose the threshold of outlierness based on the previously described statistics, we use a modified version of Tukey's rule, a standard rule for detecting outliers \cite[]{tukey77}. 
 The standard upper limit defined by Tukey's rule is $q_{75\%}(x) + 1.5 \cdot IQR(x)$, where $x$ is the vector of computed statistics and $IQR(x) = q_{75\%}(x) - q_{25\%}(x)$ is the interquartile range.
-However, there are two pitfalls when using Tukey's rule. First, Tukey's rule assumes a normally distributed sample. For example, when the data is skewed, it does not work that well. We account for skewness using the medcouple \cite[]{hubert2008adjusted}. Standard Tukey's rule also uses a fixed coefficient (1.5) that does not account for multiple testing, which means that for large samples, there are always some outliers detected when using 1.5. 
-To solve these two issues, we implement \texttt{tukey\_mc\_up} in R package bigutilsr and use it here, which accounts both for skewness and multiple testing by default.
+One assumption of Tukey's rule is that the sample is normally distributed; we account for skewness in the data using the medcouple \cite[]{hubert2008adjusted}. 
+Standard Tukey's rule also uses a fixed coefficient (1.5) that does not account for multiple testing, which means that for large samples, there are always some outliers detected when using 1.5. 
+To solve these two potential issues, we implement \texttt{tukey\_mc\_up} in R package bigutilsr and use it here, which accounts both for skewness and multiple testing by default.
 
 We remove the detected outlier variants, compute the PC scores and loadings again, and iterate until there is no detected outlier variant anymore.
 This procedure is implemented in function \texttt{bed\_autoSVD} of R package bigsnpr.
 
 \subsection{Detecting outlier samples in PCA \label{outlier-sample}}
 
-For detecting outlier samples in PCA, we use a modified version of the Probabilistic Local Outlier Factor (PLOF) statistic on PCs \cite[]{kriegel2009loop}. Using K nearest neighbours (KNN), this consists in comparing the distance from an point $j$ to its KNNs ($pd_j = \sqrt{\frac{1}{K} \sum_{k=1}^K d^2_{j \leftrightarrow j_k}}$, where $j_k$ is the $k$-th NN of $j$) with the distances from its KNNs to their KNNs ($\frac{1}{K} \sum_{k=1}^K pd_{j_k}$). The idea is that an outlier should be far from all other points, but this point is even more outlier if its KNNs are in a very dense cluster. 
+For detecting outlier samples in PCA, we use a modified version of the Probabilistic Local Outlier Factor (PLOF) statistic on PCs \cite[]{kriegel2009loop}. Using K nearest neighbours (KNN), this consists in comparing the distance from a point $j$ to its KNNs ($pd_j = \sqrt{\frac{1}{K} \sum_{k=1}^K d^2_{j \leftrightarrow j_k}}$, where $j_k$ is the $k$-th NN of $j$) with the distances from its KNNs to their KNNs ($\frac{1}{K} \sum_{k=1}^K pd_{j_k}$). The idea is that an outlier should be far from all other points, but this point is even more outlier if its KNNs are in a very dense cluster. 
 In practice, we use $pd_j / \sqrt{\frac{1}{K} \sum_{k=1}^K pd_{j_k}}$ (note the square root) as it otherwise detect any point next to a very dense cluster as an outlier.
 We implement this statistic in function \texttt{prob\_dist} of R package bigutilsr. To make it fast, we use and parallelise (\texttt{knn\_parallel}) the fast K nearest neighbours implementation of R package nabor \cite[]{elseberg2012comparison}.
 Automatic outlier detection is very hard, therefore we recommend users to choose a threshold of outlierness for this statistic based on visual inspection (histogram of these statistics and PC scores colored by these statistics).
@@ -188,7 +192,7 @@ For detecting samples that have a different ancestry from most of the samples in
 
 \subsection{Projecting PCs from a reference dataset \label{proj}}
 
-[SCHEME TO ILLUSTRATE OADP?]
+[DIAGRAM TO ILLUSTRATE OADP?]
 
 To project PCs of a reference dataset (e.g.\ 1000G) to a target genotype dataset, we implement the following 3 steps in function \texttt{bed\_projectPCA} of package bigsnpr: 1) matching the variants of each dataset, including removing ambiguous alleles [A/T] and [C/G], and matching strand and direction of the alleles; 2) computing PCA of the reference dataset using the matched variants only; 3) projecting computed PCs to the target data using an optimised implementation (see Supplementary Materials) of the Online Augmentation, Decomposition, and Procrustes (OADP) transformation \cite[]{zhang2019fast}.
 To project individuals from the same dataset as the ones used for computing PCA, you can use function \texttt{bed\_projectSelfPCA}. 
@@ -210,27 +214,40 @@ To easily download these data, we provide function \texttt{download\_1000G} in R
 
 [ALL CODE..]
 
+\noindent[TODO: Make a tuto with 1000G]
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Results}
 
-\noindent[TODO SECTION ON SAMPLE OUTLIER REMOVAL / HOMOGENEOUS SAMPLES]
+\noindent[TODO SECTION ON SAMPLE OUTLIER REMOVAL / COMPARE WITH EIGENSOFT]
 
-\noindent[TALK ABOUT EFFECT OF MISSING VALUES ON PCA?]
+\noindent[TODO SECTION ON HOMOGENEOUS SAMPLES / COMPARE WITH ABERRANT]
+
+\noindent[SHOW WHAT HAPPENS WHEN NOT REMOVING RELATEDNESS IN PCA?]
+
+\noindent[MORE EMPHASIS ON COMPUTING ALL EIGEN WITH BED\_TCROSSPRODSELF()?]
 
 
 \subsection{Performance}
 
 To show that we provide very fast implementations of the different methods presented in this paper, we apply them to the UK Biobank. We use 20 physical cores for most of the computations.
 It takes 22 minutes to perform a first phase of clumping on 406,545 unrelated individuals genotyped over 504,139 variants, which reduces the number of variants to 261,307. It then takes 34 minutes to compute the first 20 PCs using these 261,307 variants.
-If performing the automatic procedure for LD detection, it takes 5 hours to perform the initial clumping step, 6 rounds of computation of PCs and 5 rounds of outlier variant detection (i.e.\ 5 iterations of outlier detection and one final computation of PCs).
+When performing the automatic procedure for LD detection, it takes 5 hours to perform the initial clumping step, 6 rounds of computation of PCs and 5 rounds of outlier variant detection (i.e.\ 5 iterations of outlier detection and one final computation of PCs).
 
 It takes 8 minutes to match the 1000G data to the UKBB data and compute 20 PCs of the 1000G data using the automatic LD detection technique. It takes 12 minutes more to do the OADP projection of all 488,371 individuals of the UKBB data to the PCA computed using the 1000G data.
 
 Finally, it takes only 6 minutes to compute the 30-Nearest Neighbours of 20 PC scores for 406,545 UK Biobank individuals, which is the main computational aspect of computing statistics for detection individual outlier samples (Section \ref{outlier-sample}).
 
-[SHOULD INCLUDE PLINK 2.0 WITH AND WITHOUT AVX2?]
+\subsection{Outlier sample detection}
+
+To detect a few sample outliers, we compare the rule of ``6 SDs from the mean'' (6SD) to the statistic we propose in section \ref{outlier-sample}.
+Our statistic identifies only isolated samples or isolated pairs that seems to be outliers driving structure of PC17-20 (Figure \ref{fig:outlier-pd}).
+6SD identifies a lot of outliers, of which some are part of a relatively large cluster (Figure \ref{fig:outlier-sd}).
+[WHERE TO PUT FOLLOWING?] In theory, if all PCs are normally distributed, after correcting for multiple testing of 2500 individuals and 20 PCs, 6SD has a small probability of 0.0001 of detecting one outlier or more.
+
+To restrict to homogeneous samples, we compare the use of R package Aberrant as used for UKBB to the use of the robust Mahalanobis distance we propose.
 
 \subsection{Projecting PCs from a reference dataset}
 
@@ -265,8 +282,6 @@ This resulted in 48,942 individuals that we used to compute 50 PCs, which took l
 We show that we are able to capture at least 40 PCs that display visual population structure (Figures \ref{fig:UKBB-scores2} and \ref{fig:UKBB-screeplot2}).
 We then projected all 439,429 remaining individuals from UKBB onto this PCA space in 21 minutes only. Note that these individuals should not be related to any of the 48,942 individuals used for training PCA because we removed both individuals from each pair of related individuals in UKBB. Projection of new individuals show again a clear shrinkage when using simple projection (between 1.00 for PC1 and 1.80 for PC50), but no visible bias when using OADP projection (Figure \ref{fig:projUKBB-related}).
 
-\noindent[SHOW INITIAL PC SCORES OF UKBB?]
-
 \noindent[COMPUTE MAHA ON LOADINGS TO SHOW THE PEAKS SUMMARIZED IN ALL 16-18 PCS?]
 
 
@@ -274,11 +289,21 @@ We then projected all 439,429 remaining individuals from UKBB onto this PCA spac
 
 \section{Discussion}
 
-\noindent[LIMITATION 1: RUN MULTIPLE TIMES / FAIL TO SPEED UP]
+\noindent[LIMITATION 1: RUN MULTIPLE TIMES / FAIL TO SPEED UP / PRIMME + LOW-RANK UPDATE (educated guesses)]
 
 \noindent[LIMITATION 2: FAIL TO PROJECT RELATED INDIVIDUALS WITH OADP -> RESTRICT MORE.]
 
 \noindent[ADD DISCU ON OTHER USE + OTHER POSSIBLE PROBLEMS -> METHYL]
+
+\noindent[OK TO PROJECT DIRECTLY UKBB (BECAUSE OF SIZE) -> INCLUDE? DO NOT CARE IF SUBSETTING]
+
+\noindent[PROMOTE VISUAL INSPECTION]
+
+\noindent[To make sure within one population. Do the Maha in one pop and then apply it to everyone]
+
+\noindent[Show pipeline to compute PCA (diagram like first paper)]
+
+\noindent[DISCUSS ABOUT PC16 -> FROM DIFFERENT ASSESSMENT CENTRES -> 36\% correlation with number of NA for all PC16 > 30]
 
 \subsection{Conclusion}
 
@@ -338,6 +363,72 @@ As $U^T U = I$, we note that $(U \Delta)^T \widetilde{U} = \Delta V_2[1{:}K,~]$ 
 \clearpage
 
 \subsection*{Supplementary figures}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{figure}[htbp]
+\centering
+\begin{subfigure}[b]{0.5\textwidth}
+\includegraphics[width=\textwidth]{hist-outliers-1000G.pdf}
+\caption{Distribution of statistics}
+\end{subfigure}
+\\~\\
+\begin{subfigure}[b]{0.45\textwidth}
+\includegraphics[width=\textwidth]{outliers-1000G.pdf}
+\caption{Principal Component (PC) scores 13 to 20 of 1000G, colored by statistic of outlierness.\\~\\}
+\end{subfigure}
+~~~~~~
+\begin{subfigure}[b]{0.45\textwidth}
+\includegraphics[width=\textwidth]{be-outlier-1000G.pdf}
+\caption{Principal Component (PC) scores 13 to 20 of 1000G, colored by being detected as an outlier. Threshold of outlierness is determined based on histogram (a).}
+\end{subfigure}
+\caption{Outlier detection in the 1000 Genomes (1000G) project, using \texttt{prob\_dist} (Section \ref{outlier-sample}).\label{fig:outlier-pd}}
+\end{figure}
+
+\begin{figure}[htbp]
+\centering
+\begin{subfigure}[b]{0.5\textwidth}
+\includegraphics[width=\textwidth]{hist-outliers2-1000G.pdf}
+\caption{Distribution of statistics and default threshold (6, in red)}
+\end{subfigure}
+\\~\\
+\begin{subfigure}[b]{0.45\textwidth}
+\includegraphics[width=\textwidth]{outliers2-1000G.pdf}
+\caption{Principal Component (PC) scores 13 to 20 of 1000G, colored by statistic of outlierness (log-scale).\\~\\}
+\end{subfigure}
+~~~~~~
+\begin{subfigure}[b]{0.45\textwidth}
+\includegraphics[width=\textwidth]{be-outlier2-1000G.pdf}
+\caption{Principal Component (PC) scores 13 to 20 of 1000G, colored by being detected as an outlier. Threshold of outlierness is determined based on histogram (a).}
+\end{subfigure}
+\caption{Outlier detection in the 1000 Genomes (1000G) project, using the rule ``6 SDs from the mean'', i.e.\ where S2 is the maximum (for all PCs) number of SDs from the mean (Section \ref{outlier-sample}).\label{fig:outlier-sd}}
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{figure}[htbp]
+\centering
+\begin{subfigure}[b]{0.45\textwidth}
+\includegraphics[width=\textwidth]{UKBB-White-British.png}
+\caption{PCs 1 to 20 of UKBB, colored by whether it is in the group of ``White British'' reported by the UKBB (blue).}
+\end{subfigure}
+~~~~~~
+\begin{subfigure}[b]{0.5\textwidth}
+\includegraphics[width=\textwidth]{UKBB-Maha-dist.png}
+\caption{PCs 1 to 20 of UKBB, colored by statistic of robust Mahalanobis distances (log-scale).\\}
+\end{subfigure}
+\\~\\
+\begin{subfigure}[b]{0.45\textwidth}
+\includegraphics[width=\textwidth]{hist-Maha-dist.pdf}
+\caption{Distribution of (log squared) distances.\\~\\~\\~\\}
+\end{subfigure}
+~~~~~~
+\begin{subfigure}[b]{0.45\textwidth}
+\includegraphics[width=\textwidth]{UKBB-Maha-outlier.png}
+\caption{PCs 1 to 20 of UKBB, colored by being detected as an outlier. Threshold of outlierness is determined based on histogram (c), where the threshold of 5 is chosen for the logarithm of the distances.}
+\end{subfigure}
+\caption{Homogeneous sample detection in the UK Biobank (UKBB), using robust Mahalanobis distances computed on the first 20 Principal Component scores (PCs) of UKBB.).\label{fig:homogeneous}}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -406,6 +497,7 @@ Blue points are the individuals from 1000G, projected using the Online Augmentat
 \begin{figure}[!htpb]
 \centerline{\includegraphics[width=0.9\textwidth]{UKBB-PC1-20.png}}
 \caption{Principal Component (PC) scores 1 to 20 computed on the UK Biobank.
+Different colors represent different self-reported ancestries.
 \label{fig:UKBB-scores}}
 \end{figure}
 
