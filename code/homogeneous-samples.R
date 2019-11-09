@@ -3,13 +3,23 @@ library(bigreadr)
 library(dplyr)
 library(ggplot2)
 
-rel <- fread2("data/ukb25589_rel_s488346.dat")
-fam <- fread2("data/ukbb_bed/ukbb_488282.fam")
-ind.row <- which(!fam$V2 %in% rel$ID2)
-obj.bed <- bed("data/ukbb_bed/ukbb_488282.bed")
+## Self-reported ancestry (https://biobank.ctsu.ox.ac.uk/crystal/coding.cgi?id=1001)
+code_ancestry <- fread2("data/coding1001.tsv")
+df0 <- fread2(
+  "data/ukb22544.csv",
+  select = c("eid", "21000-0.0", "22006-0.0", paste0("22009-0.", 1:20)),
+  col.names = c("eid", "pop", "is_caucasian", paste0("PC", 1:20))
+) %>%
+  mutate(
+    pop  = factor(pop, levels = code_ancestry$coding,
+                  labels = code_ancestry$meaning),
+    is_caucasian = as.logical(is_caucasian)
+  )
 
-obj.svd <- readRDS("tmp-results/SVD_UKBB.rds")
-PC <- predict(obj.svd)
+PC <- na.omit(as.matrix(df0[-(1:3)]))
+ind_na <- attr(PC, "na.action")
+pop_UKBB <- df0$pop[-ind_na]
+
 
 dist <- bigutilsr::covRob(PC, estim = "pairwiseGK")$dist
 
@@ -19,9 +29,10 @@ ggplot() +
   theme_bigstatsr() +
   labs(x = "log Mahalanobis distance", y = "Frequency")
 
-# ggsave("figures/hist-Maha-dist.pdf", width = 9, height = 6)
+# ggsave("figures/hist-Maha-dist.pdf", width = 10, height = 6)
 
-plot_grid(plotlist = lapply(1:10, function(k) {
+
+plot_grid(plotlist = lapply(1:9, function(k) {
   k1 <- 2 * k - 1; k2 <- 2 * k
   qplot(PC[, k1], PC[, k2]) +
     labs(x = paste0("PC", k1), y = paste0("PC", k2)) +
@@ -30,64 +41,47 @@ plot_grid(plotlist = lapply(1:10, function(k) {
     theme(legend.position = "none") +
     scale_color_viridis_c(trans = "log") +
     coord_equal()
-}), ncol = 5)
+}), ncol = 3)
 
-# ggsave("figures/UKBB-Maha-dist.png", width = 11, height = 8)
-
-## Self-reported ancestry (https://biobank.ctsu.ox.ac.uk/crystal/coding.cgi?id=1001)
-code_ancestry <- fread2("data/coding1001.tsv")
-csv <- "data/ukb22544.csv"
-df0 <- fread2(csv, select = c("eid", "21000-0.0", "22006-0.0"),
-              col.names = c("eid", "pop", "is_caucasian")) %>%
-  mutate(
-    pop  = factor(pop, levels = code_ancestry$coding,
-                  labels = code_ancestry$meaning),
-    is_caucasian = as.logical(is_caucasian)
-  )
-pop_UKBB <- df0$pop[match(obj.bed$fam$sample.ID, df0$eid)]
-
-pval <- pchisq(dist, df = ncol(PC), lower.tail = FALSE)
-
-ggplot() +
-  geom_histogram(aes(pval), breaks = 0:20 / 20,
-                 color = "#000000", fill = "#000000", alpha = 0.5) +
-  scale_y_sqrt(breaks = 10^(1:6)) +
-  theme_bigstatsr() +
-  labs(x = "P-value", y = "Frequency (sqrt-scale)")
-
-# ggsave("figures/hist-Maha-pval.pdf", width = 9, height = 6)
+# ggsave("figures/UKBB-Maha-dist.png", width = 10, height = 9)
 
 
-sapply(setNames(nm = c(0, 1e-20, 1e-8, 1e-5, 1e-4, 1e-3, 0.01, 0.02, 0.05, 0.1, 0.2)), function(thr) {
-  tab <- table(pop_UKBB[ind.row][pval >= thr])
+sapply(setNames(3:12, paste("<", 3:12)), function(thr) {
+  tab <- table(pop_UKBB[dist < exp(thr)])
   c(tab, All = sum(tab))
-})
-#                                 0  1e-20  1e-08  1e-05  1e-04  0.001   0.01   0.02   0.05    0.1    0.2
-# Prefer not to answer         1347    867    844    830    823    808    777    762    719    673    581
-# Do not know                   178     65     61     58     57     53     51     50     47     44     39
-# White                         456    372    356    343    338    332    311    302    289    275    241
-# Mixed                          38      4      4      4      4      4      2      2      2      2      2
-# Asian or Asian British         39      0      0      0      0      0      0      0      0      0      0
-# Black or Black British         20      1      1      1      1      1      1      1      1      1      1
-# Chinese                      1436      1      1      1      1      1      1      1      1      1      1
-# Other ethnic group           4102    220    203    199    194    172    133    122    109     95     76
-# British                    354557 340933 334013 329188 326376 321659 310963 304622 290116 270424 236302
-# Irish                       10628  10488  10435  10243   9809   8604   6230   5353   4088   3128   2230
-# Any other white background  14954   6390   5079   4535   4274   3980   3493   3324   2973   2646   2177
-# White and Black Caribbean     543      4      4      4      4      4      4      4      4      2      2
-# White and Black African       364      3      3      3      3      3      3      3      2      2      1
-# White and Asian               716     12     10      6      6      6      5      5      5      5      5
-# Any other mixed background    891     73     66     58     57     56     49     48     44     41     33
-# Indian                       5242      1      1      1      1      1      1      1      1      0      0
-# Pakistani                    1606      0      0      0      0      0      0      0      0      0      0
-# Bangladeshi                   213      0      0      0      0      0      0      0      0      0      0
-# Any other Asian background   1658      0      0      0      0      0      0      0      0      0      0
-# Caribbean                    3793      0      0      0      0      0      0      0      0      0      0
-# African                      3103      0      0      0      0      0      0      0      0      0      0
-# Any other Black background    106      0      0      0      0      0      0      0      0      0      0
-# All                        405990 359434 351081 345474 341948 335684 322024 314600 298401 277339 241691
+}) %>%
+  print() %>%
+  { ifelse(. == 0, "", .) } %>%
+  xtable::xtable(caption = "Number of UKBB individuals with (log) Mahalanobis distance lower than some threshold (top), grouped by self-reported ancestry (left).",
+                 label = "tab:homogeneous",
+                 align = "|l|r|r|r|r|r|r|r|r|r|r|") %>%
+  print(caption.placement = "top")
+#                               < 3    < 4    < 5    < 6    < 7    < 8    < 9   < 10   < 11   < 12
+# Prefer not to answer          484   1013   1062   1099   1139   1177   1279   1405   1471   1583
+# Do not know                    36     68     76     84     92    118    155    188    196    204
+# White                         186    422    457    483    513    533    543    543    545    546
+# Mixed                           2      6      6      7      8     15     26     42     46     46
+# Asian or Asian British          0      0      0      0      0      3     20     40     42     42
+# Black or Black British          1      2      2      2      2      2      2      4      6     26
+# Chinese                         0      1      1      1      1      2      5     21   1423   1504
+# Other ethnic group             57    230    261    314    469    885   1939   2761   3681   4356
+# British                    191713 400516 416492 424490 427769 429172 431026 431082 431089 431090
+# Irish                        1416  12039  12620  12700  12734  12743  12759  12759  12759  12759
+# Any other white background   1468   4747   6953   9341  12979  14613  15741  15810  15820  15820
+# White and Black Caribbean       1      4      4      4      9     35    142    537    589    597
+# White and Black African         1      3      3      4      6     29     99    333    400    402
+# White and Asian                 4      7     13     23     79    350    651    790    802    802
+# Any other mixed background     24     66     87    155    274    391    595    884    990    996
+# Indian                          0      2      2      5      6     29   1682   5700   5716   5716
+# Pakistani                       0      0      0      0      1     13    532   1747   1748   1748
+# Bangladeshi                     0      0      0      0      0      0      2    220    221    221
+# Any other Asian background      0      0      0      1      6     66    427   1364   1730   1747
+# Caribbean                       0      0      0      0      0      0      3    113   1323   4299
+# African                         0      1      1      1      1      1      3     58    350   3205
+# Any other Black background      0      0      0      0      0      1      3     22     49    118
+# All                        195393 419127 438040 448714 456088 460178 467634 476423 480996 487827
 
-plot_grid(plotlist = lapply(1:10, function(k) {
+plot_grid(plotlist = lapply(1:9, function(k) {
   k1 <- 2 * k - 1; k2 <- 2 * k
   qplot(PC[, k1], PC[, k2]) +
     labs(x = paste0("PC", k1), y = paste0("PC", k2)) +
@@ -96,26 +90,24 @@ plot_grid(plotlist = lapply(1:10, function(k) {
     theme(legend.position = "none") +
     scale_color_viridis_d(direction = -1) +
     coord_equal()
-}), ncol = 5)
+}), ncol = 3)
 
-# ggsave("figures/UKBB-Maha-outlier.png", width = 11, height = 8)
+# ggsave("figures/UKBB-Maha-outlier.png", width = 10, height = 9)
 
 
 # Reported by the UK Biobank
+is_WB <- df0$is_caucasian[-ind_na]; is_WB[is.na(is_WB)] <- FALSE
+table(pop_UKBB[is_WB])  ## All British
 
-is_WB <- df0$is_caucasian[match(obj.bed$fam$sample.ID, df0$eid)]
-length(ind1 <- na.omit(ind.row[is_WB[ind.row]]))
-table(pop_UKBB[ind1])  ## All British
-
-plot_grid(plotlist = lapply(1:10, function(k) {
+plot_grid(plotlist = lapply(1:9, function(k) {
   k1 <- 2 * k - 1; k2 <- 2 * k
   qplot(PC[, k1], PC[, k2]) +
-    labs(x = paste0("PC", k1), y = paste0("PC", k2), color = "Is White British?") +
+    labs(x = paste0("PC", k1), y = paste0("PC", k2)) +
     theme_bigstatsr(0.5) +
-    aes(color = ind.row %in% ind1) +
+    aes(color = is_WB) +
     theme(legend.position = "none") +
     scale_color_viridis_d(direction = -1) +
     coord_equal()
-}), ncol = 5)
+}), ncol = 3)
 
-# ggsave("figures/UKBB-White-British.png", width = 11, height = 8)
+# ggsave("figures/UKBB-White-British.png", width = 10, height = 9)
