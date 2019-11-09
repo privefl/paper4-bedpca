@@ -272,6 +272,16 @@ We then projected all 439,429 remaining individuals from UKBB onto this PCA spac
 
 \section{Discussion}
 
+\begin{figure}[!htpb]
+\centerline{\includegraphics[width=0.4\textwidth]{PCA-pipeline.pdf}}
+\caption{Pipeline for computing Principal Components (PCs) using R packages bigsnpr and bigutilsr. [ADD VISUAL INSPECTION? QC? IN THE LEGEND?]
+\label{fig:pipeline}}
+\end{figure}
+
+In this work, we compiled different pitfalls that can occur with analyses related to Principal Component Analysis (PCA) of genetic data. We then investigated possible solutions to these pitfalls and choose the ones that we thought to be the most relevant both with respect to properties such as accuracy and robustness, but also that are fast and easy to use. We then implemented these solutions in open-source R packages that are available for anyone to use.
+
+As a general recommendation for computing PCA, we show some pipeline in figure \ref{fig:pipeline}. [DESCRIBE ALL STEPS?]
+
 \noindent[LIMITATION 1: RUN MULTIPLE TIMES / FAIL TO SPEED UP / PRIMME + LOW-RANK UPDATE (educated guesses)]
 
 \noindent[LIMITATION 2: FAIL TO PROJECT RELATED INDIVIDUALS WITH OADP -> RESTRICT MORE.]
