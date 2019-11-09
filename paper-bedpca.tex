@@ -157,7 +157,7 @@ To compute this decomposition easily and efficiently, we implement an accessor t
 
 \subsection{Robust Mahalanobis distance \label{maha}}
 
-In this paper, for many applications, we use the pairwise orthogonalized Gnanadesikan-Kettenrin robust Mahalanobis distance as implemented in function \texttt{covRob} of R package robust with parameter \texttt{estim = "pairwiseGK"} \cite[]{gnanadesikan1972robust,yohai1988high,maronna2002robust,todorov2009object}. We reexport function \texttt{covRob} in R package bigutilsr for convenience.
+In this paper, for many applications, we use the pairwise orthogonalised Gnanadesikan-Kettenrin robust Mahalanobis distance as implemented in function \texttt{covRob} of R package robust with parameter \texttt{estim = "pairwiseGK"} \cite[]{gnanadesikan1972robust,yohai1988high,maronna2002robust,todorov2009object}. We reexport function \texttt{covRob} in R package bigutilsr for convenience.
 
 When computing these distances on $K$ approximately independent variables such as the first $K$ PC scores, the computed squared distances follow a $\chi^2(K)$ distribution.
 
@@ -185,7 +185,7 @@ In practice, we use $pd_j / \sqrt{\frac{1}{K} \sum_{k=1}^K pd_{j_k}}$. Note the 
 We implement this statistic in function \texttt{prob\_dist} of R package bigutilsr. To make it fast, we use the fast K nearest neighbours implementation of R package nabor \cite[]{elseberg2012comparison} and paralleliseit in function \texttt{knn\_parallel} of package bigutilsr.
 Automatic outlier detection is very hard, therefore we recommend users to choose a threshold of outlierness for this statistic based on visual inspection (histogram of these statistics and PC scores colored by these statistics).
  
-For detecting samples that have a different ancestry from most of the samples in the data, i.e.\ for restricting to homogeneous samples, we compute the pairwise orthogonalized Gnanadesikan-Kettenrin robust Mahalanobis distances on PC scores (Section \ref{maha}). We then restrict to individuals whose log-distance (alternatively p-value) is smaller (larger) than some threshold determined based on visual inspection.
+For detecting samples that have a different ancestry from most of the samples in the data, i.e.\ for restricting to homogeneous samples, we compute the pairwise orthogonalised Gnanadesikan-Kettenrin robust Mahalanobis distances on PC scores (Section \ref{maha}). We then restrict to individuals whose log-distance (alternatively p-value) is smaller (larger) than some threshold determined based on visual inspection.
 
 
 \subsection{Projecting PCs from a reference dataset \label{proj}}
@@ -213,8 +213,6 @@ When removing related individuals, we use the list of individual pairs reported 
 
 \section{Results}
 
-\noindent[TODO SECTION ON HOMOGENEOUS SAMPLES / COMPARE WITH ABERRANT]
-
 \subsection{Performance}
 
 To show that we provide very fast implementations of the different methods presented in this paper, we apply them to the UK Biobank. We use 20 physical cores for most of the computations.
@@ -223,7 +221,7 @@ When performing the automatic procedure for LD detection, it takes 5 hours to pe
 
 It takes 8 minutes to match the 1000G data to the UKBB data and compute 20 PCs of the 1000G data using the automatic LD detection technique. It takes 12 minutes more to do the OADP projection of all 488,371 individuals of the UKBB data to the PCA computed using the 1000G data.
 
-Finally, it takes only 6 minutes to compute the 30-Nearest Neighbours of 20 PC scores for 406,545 UK Biobank individuals, which is the main computational aspect of computing statistics for detection individual outlier samples (Section \ref{outlier-sample}).
+Finally, it takes only 6 minutes to compute the 30-Nearest Neighbours of 20 PC scores for 406,545 UK Biobank individuals, which is the main computational aspect of computing statistics for detecting individual outlier samples (Section \ref{outlier-sample}).
 
 \subsection{Outlier sample detection}
 
@@ -232,20 +230,20 @@ Our statistic identifies only isolated samples or isolated pairs that seems to b
 6SD identifies a lot of outliers, of which some are part of a relatively large cluster (Figure \ref{fig:outlier-sd}).
 [WHERE TO PUT FOLLOWING?] In theory, if all PCs are normally distributed, after correcting for multiple testing of 2500 individuals and 20 PCs, 6SD has a small probability of 0.0001 of detecting one outlier or more.
 
-To restrict to homogeneous samples, we compare the use of R package aberrant used to report the ``White British'' subset of UKBB homogeneous samples, to the use of the robust Mahalanobis distance we propose.
+When the goal is to restrict to homogeneous samples, we compare the use of R package aberrant used to report the ``White British'' subset of UKBB homogeneous samples, to the use of the robust Mahalanobis distance we propose.
 Here, we choose a threshold of 5 and show that this gives a similar subset of individuals than the ``White British'' subset reported by the UK Biobank (Figure \ref{fig:homogeneous}).
 Using this threshold of 5, only 3 out of 10,936 people of Asian ancestry (1 ``Chinese'' and 2 ``Indian'') are kept, and 1 ``African'' out of 7622 poeple with Black background is kept (Table \ref{tab:homogeneous}). 
-In contrast, 416,492 out of 431,090 ``British'' (96.6\%) and 12,620 out of 12759 ``Irish'' (98.9\%) are kept.
+In contrast, 416,492 out of 431,090 ``British'' (96.6\%) and 12,620 out of 12,759 ``Irish'' (98.9\%) are kept.
 
 \subsection{Projecting PCs from a reference dataset}
 
-We use 60\% of individuals in the 1000G data (section \ref{1000G}) to compute the PCA ($K=20$ PCs) [EXPLICIT SAMPLE SIZE]. Then, we project the remaining 40\% individuals using three methods: 1/ simply multiplying the genotypes of these individuals by the previously computed loadings, 2/ correcting the simple projections using asymptotic shrinkage factors as determined by R package hdpca v1.1.3 \cite[]{dey2019asymptotic}, with all eigenvalues derived from the Genetic Relationship Matrix (GRM) computed with function \texttt{bed\_tcrossprodSelf} of R package bigsnpr, and 3/ the OADP projection (section \ref{proj}). 
+We use 60\% of individuals in the 1000G data (section \ref{1000G}) to compute the PCA ($K=20$ PCs). Then, we project the remaining 40\% individuals using three methods: 1/ simply multiplying the genotypes of these individuals by the previously computed loadings, 2/ correcting the simple projections using asymptotic shrinkage factors as determined by R package hdpca v1.1.3 \cite[]{dey2019asymptotic}, with all eigenvalues derived from the Genetic Relationship Matrix (GRM) computed with function \texttt{bed\_tcrossprodSelf} of R package bigsnpr, and 3/ the OADP projection (section \ref{proj}). 
 When simply projecting using loadings, there is no apparent shrinkage for PC1 and PC2, a weak [REWORD?] shrinkage for PC3 and PC4, and a large shrinkage for PC5 to PC8 (Figure \ref{fig:proj1000G}). [USE VALUES?]
 In contrast, there is no apparent shrinkage when projecting new individuals with OADP (Figure \ref{fig:proj1000G}).
 Simple projection is affected even more by this shrinkage for PC9 to PC20, while OADP appears free of this issue (Figure \ref{fig:proj1000G-2}).
 We show the same results when projecting the full UK Biobank data onto PCA computed using 1000G data  (Figure \ref{fig:proj1000G-5}).
 When correcting projected PC scores with asymptotic shrinkage factors, bias is smaller than when simply projecting loadings, yet, there is an apparent bias for PC7-8 (Figure \ref{fig:proj1000G-3}).
-Finally, to assess if OADP could be used to project individuals that are related to some individuals that were used to compute PCA, we projected these individuals (as if we were projecting their monozygotic twins) using OADP. Projections of related individuals using OADP shows some reverse [REWORD?] shrinkage (Figure \ref{fig:proj1000G-4}).
+Finally, to assess if OADP could be used to project individuals that are related to some individuals that were used to compute PCA, we projected these 60\% individuals (as if we were projecting their monozygotic twins) using OADP. Projections of related individuals using OADP shows some reverse [REWORD?] shrinkage (Figure \ref{fig:proj1000G-4}).
 
 When computing the PCA on the UK Biobank using 406,545 unrelated individuals and 171,977 variants, and projecting the 1000G data onto this reference PCA space, shrinkage is much smaller ($\leq 1.08$ for all 20 first PCs, Figure \ref{fig:proj1000G-6}).
 
@@ -261,14 +259,14 @@ Blue points are the 40\% remaining individuals, projected using the Online Augme
 
 \subsection{PCA of the UK Biobank}
 
-Principal Components (PC) loadings reported by the UK Biobank clearly show that PC19 to PC40 capture LD structure, which is also the case for PC16 and PC18, although less pronounced (see peaks in figure \ref{fig:UKBB-loadings40}). 
-Moreover, our automatic procedure removing long-range LD regions did not converge after 5 iterations, meaning that it kept detecting long-range LD regions at each iteration. Therefore, we were able to capture only 16 PCs that shows population stratification and not LD structure (Figures \ref{fig:UKBB-screeplot}, \ref{fig:UKBB-scores} and \ref{fig:UKBB-loadings}).
+Principal Component loadings reported by the UK Biobank clearly show that PC19 to PC40 capture LD structure, which is also the case for PC16 and PC18, although less pronounced (see peaks in figure \ref{fig:UKBB-loadings40}). 
+When applying our automatic procedure to remove long-range LD regions, it did not converge after 5 iterations, meaning that it kept detecting long-range LD regions at each iteration. Therefore, we were able to capture only 16 PCs that shows population stratification and not LD structure (Figures \ref{fig:UKBB-screeplot}, \ref{fig:UKBB-scores} and \ref{fig:UKBB-loadings}).
 
-Then, we computed again PCA after restricting the individuals included in the computations: we randomly subsampled UKBB data to use only 10,000 British individuals (out of 431,029) and 5000 Irish individuals (out of 12,755), while keeping all individuals with other self-reported individuals. 
+Then, we computed again PCA after restricting the individuals included in the computations: we randomly subsampled UKBB data to use only 10,000 British individuals (out of 431,029) and 5000 Irish individuals (out of 12,755), while keeping all individuals with other or unkonwn self-reported ancestry. 
 We further removed all pairs of related individuals reported by the UKBB (both individuals in each pair). 
 This resulted in 48,942 individuals that we used to compute 50 PCs, which took less than 3 hours using function \texttt{bed\_autoSVD} (that converged after 4 iterations of automatic LD removal). 
-We show that we are able to capture at least 40 PCs that display visual population structure (Figures \ref{fig:UKBB-scores2} and \ref{fig:UKBB-screeplot2}).
-We then projected all 439,429 remaining individuals from UKBB onto this PCA space in 21 minutes only. Note that these individuals should not be related to any of the 48,942 individuals used for training PCA because we removed both individuals from each pair of related individuals in UKBB. Projection of new individuals show again a clear shrinkage when using simple projection (between 1.00 for PC1 and 1.80 for PC50), but no visible bias when using OADP projection (Figure \ref{fig:projUKBB-related}).
+We show that we are able to capture more PCs (at least 40) that display visual population structure (Figures \ref{fig:UKBB-scores2} and \ref{fig:UKBB-screeplot2}).
+We then projected all 439,429 remaining individuals from UKBB onto this PCA space in 21 minutes only using our implementation of the OADP projection. Note that these individuals should not be related to any of the 48,942 individuals used for training PCA because we removed both individuals from each pair of related individuals in UKBB. Projection of new individuals show again a clear shrinkage when using simple projection (between 1.00 for PC1 and 1.80 for PC50), but no visible bias when using OADP projection (Figure \ref{fig:projUKBB-related}).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
