@@ -213,6 +213,8 @@ When removing related individuals, we use the list of individual pairs reported 
 
 \section{Results}
 
+\noindent[MOVE FIGURE TO MAIN TEXT? E.G. \ref{fig:UKBB-scores2}]
+
 \subsection{Performance}
 
 To show that we provide very fast implementations of the different methods presented in this paper, we apply them to the UK Biobank. We use 20 physical cores for most of the computations.
@@ -278,34 +280,37 @@ We then projected all 439,429 remaining individuals from UKBB onto this PCA spac
 \label{fig:pipeline}}
 \end{figure}
 
-In this work, we compiled different pitfalls that can occur with analyses related to Principal Component Analysis (PCA) of genetic data. We then investigated possible solutions to these pitfalls and choose the ones that we thought to be the most relevant both with respect to properties such as accuracy and robustness, but also that are fast and easy to use. We then implemented these solutions in open-source R packages that are available for anyone to use.
+In this work, we have compiled different pitfalls that can occur with analyses related to Principal Component Analysis (PCA) of genetic data. Then, we have investigated possible solutions to these pitfalls and chose the ones that we thought to be the most relevant both with respect to properties such as accuracy and robustness, but also that would be fast and easy to use. We then implemented these solutions in open-source R packages. 
+These functions can be directly used on genotypes stored as PLINK bed/bim/fam files with some missing values. 
+This is in contrast with our first release of packages bigstatsr and bigsnpr that use their own ``bigSNP'' format that can store both genotype calls and (rounded) dosages, but that mostly provide functions that require no missing value.
+Yet, PCA is a useful tool on its own and does not require extensive imputed data, therefore we decided that operating directly on PLINK files with a few missing values would be more practical for the users.
 
-As a general recommendation for computing PCA, we show some pipeline in figure \ref{fig:pipeline}. [DESCRIBE ALL STEPS?]
+As a general recommendation for computing PCA, we show some pipeline in figure \ref{fig:pipeline}. [START WITH QC?]
+This requires removing all related individuals, for which we provide an R wrapper to PLINK's implementation of KING robust kinship coefficients \cite[]{manichaikul2010robust,chang2015second}. 
+Note that one should remove both individuals in each related pairs so that projected individuals at the end are not related to the ones used for computing PCA, as we showed that relatedness is a problem when using the OADP projection.
+Then, it requires to do several steps of outlier detection, one for outlier variants that capture long-range LD variation (automatic), and one for detecting outlier samples (semi-automatic and visual).
+To fasten these steps, we tried hard to come up with a solution for not recomputing PCA from scratch when removing a few samples or variants. Using educated guesses based on low-rank approximations seemed to be a promising approach but did not fasten computation by much, so we did not pursue this idea \cite[]{brand2003fast,wu2017primme}. 
+Once PCA is done, one should look at the loadings to make sure that there is no apparent LD structure left. 
+One should also look at PC scores to identify which PCs capture population structure.
+As in many applications, we believe that a compromise should be made between signal and noise. Therefore, we recommend to use only PCs that show population structure (e.g.\ first 16 PCs in figure \ref{fig:UKBB-scores}) [NOTE SURE ABOUT PC15-16..].
 
-\noindent[LIMITATION 1: RUN MULTIPLE TIMES / FAIL TO SPEED UP / PRIMME + LOW-RANK UPDATE (educated guesses)]
+We also provide some recommendations when the dataset is composed mainly of one population (e.g.\ British people in the UK Biobank).
+We show that it is useful to actually subset these individuals so there is not too much imbalance between the number of people from different ancestries. 
+Indeed, when subsetting British and Irish people, we are able to capture a lot more PCs that show population structure.
+This makes designs such as the 1000 Genomes project, that gathered around 100 people for each of 26 populations, highly relevant for capturing population structure.
+In contrast, when the goal is to have an homogeneous sample, we show that using the Mahalanobis distance on PC scores can efficiently achieve this goal, which we used in previous analyses \cite[]{prive2019efficient}.
+When the homogeneous sample is not predominant in the dataset, one solution is to compute the center and covariance of the robust Mahalanobis distance using only the population of interest, and then computing the distances for all individuals using these parameters. 
 
-\noindent[LIMITATION 2: FAIL TO PROJECT RELATED INDIVIDUALS WITH OADP -> RESTRICT MORE.]
-
-\noindent[ADD DISCU ON OTHER USE + OTHER POSSIBLE PROBLEMS -> METHYL]
-
-\noindent[OK TO PROJECT DIRECTLY UKBB (BECAUSE OF SIZE) -> INCLUDE? DO NOT CARE IF SUBSETTING]
-
-\noindent[PROMOTE VISUAL INSPECTION]
-
-\noindent[To make sure within one population. Do the Maha in one pop and then apply it to everyone]
-
-\noindent[Show pipeline to compute PCA (diagram like first paper)]
+Finally, we have showed some pitfalls when computing PCA on genotype data, yet we think most of the results in this paper are not inherent to genotype data, and can be transferred to e.g.\ other omics data as well. For example, outlier and homogeneous sample detection can be used on PCs of anything. Moreover, projection of scores will also be a problem for other omics data where the number of variables used is larger than the number of samples used for computing PCA. Finally, our recommendation of gathering ``populations'' of approximately the same size is relevant for other biological data as well.
+However, other pitfalls might apply when using other types of data; for example, methylation data can be confounded by factors such as age and sex, and it might be benificial to remove some probes that are associated with these confounding factors before computing PCA \cite[]{decamps2019guidelines}.
 
 \noindent[DISCUSS ABOUT PC16 -> FROM DIFFERENT ASSESSMENT CENTRES -> 36\% correlation with number of NA for all PC16 > 30]
 
-\subsection{Conclusion}
-
-
-
+\noindent[MORE CITATIONS IN THE DISCUSSION?]
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%\newpage
+\newpage
 
 \section*{Software and code availability}
 
@@ -329,7 +334,7 @@ The other authors declare no competing interests.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%\newpage
+\newpage
 
 \bibliographystyle{natbib}
 \bibliography{refs}
