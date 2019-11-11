@@ -101,19 +101,20 @@ Overall, we believe this work would be of interest for anyone using PCA in their
 
 Principal Component Analysis (PCA) has been widely used in genetics for many years and in many contexts. For instance, adding PCs as covariates has been used to adjust for population structure in Genome-Wide Association Studies (GWAS) \cite[]{price2006principal}. PCA has also been used to detect loci under selection \cite[]{galinsky2016fast,luu2017pcadapt}.
 Recently, the advent of large population-scale genetic datasets, such as the UK biobank data, has prompted research on developing scalable algorithms to compute PCA on very large data \cite[]{bycroft2017genome}.
-This is now possible to compute PCA on these very large datasets thanks to software such as FastPCA (fast mode of EIGENSOFT), FlashPCA2, PLINK 2.0 (approx mode), bigstatsr/bigsnpr and TeraPCA \cite[]{galinsky2016fast,abraham2017flashpca2,chang2015second,prive2017efficient,bose2019terapca}.
+It is now possible to efficiently approximate PCA on very large datasets thanks to software such as FastPCA (fast mode of EIGENSOFT), FlashPCA2, PLINK 2.0 (approx mode), bigstatsr/bigsnpr, TeraPCA and ProPCA \cite[]{galinsky2016fast,abraham2017flashpca2,chang2015second,prive2017efficient,bose2019terapca,agrawal2019scalable}.
 
 However, some pitfalls related to PCA of genotype data have been documented and not all of the currently available software address all of these. 
 In the following, we recall common pitfalls and explain when they are relevant.
-First, efficient methods for PCA use approximations, which can results in some lack of precision of computed PCs. This has been shown to be a possible issue for software such as FastPCA and PLINK 2.0, but not for FlashPCA2 and bigstatsr/bigsnpr \cite[]{abraham2017flashpca2,prive2017efficient}.
-Second, some of the PCs may capture LD structure rather than population structure \cite[]{price2008long,abdellaoui2013population,prive2017efficient}. Including PCs that capture LD as covariates in genetic analyses can lead to reduced power, e.g.\ for detecting genetic association within these LD regions in GWAS.  
-Third, another issue may arise when projecting PCs of a reference dataset to another study dataset: projected PCs are shrunk towards 0 in the new dataset \cite[]{lee2010convergence,wang2015improved,zhang2019fast}. This shrinkage makes it potentially dangerous to use the projected PCs for analyses such as PC regression, ancestry detection and correction for ancestry.
-Finally, PC scores may capture outliers that are due to family structure, population structure or other reasons; it might be benificial to detect and remove these individuals to maximise the population structure captured by PCA (in the case of removing a few outliers) or to restrict analyses to genetically homogeneous samples (e.g.\ ``White British'' people in the UK Biobank).
-An overview of existing methods with their respective pros and cons is presented in table \ref{tab:method-overview}.
+First, some of the PCs may capture LD structure rather than population structure \cite[]{price2008long,abdellaoui2013population,prive2017efficient}. Including PCs that capture LD as covariates in genetic analyses can lead to reduced power, e.g.\ for detecting genetic association within these LD regions in GWAS.  
+Second, another issue may arise when projecting PCs of a reference dataset to another study dataset: projected PCs are shrunk towards 0 in the new dataset \cite[]{lee2010convergence,wang2015improved,zhang2019fast}. This shrinkage makes it potentially dangerous to use the projected PCs for analyses such as PC regression, ancestry detection and correction for ancestry.
+Third, PC scores may capture outliers that are due to family structure, population structure or other reasons; it might be benificial to detect and remove these individuals to maximise the population structure captured by PCA (in the case of removing a few outliers) or to restrict analyses to genetically homogeneous samples (e.g.\ ``White British'' people in the UK Biobank).
+Finally, efficient methods for PCA use approximations, which can results in some lack of precision of computed PCs. This has been shown to be a possible issue for software such as FastPCA and PLINK 2.0, but not for FlashPCA2 and bigstatsr/bigsnpr \cite[]{abraham2017flashpca2,prive2017efficient}.
+An overview of existing methods with their respective advantages and limitations is presented in table \ref{tab:method-overview}.
 
-For this paper, we derive a new implementation of PCA that can be used directly on bed/bim/fam PLINK files with some missing values, which we make available in a new release of R package bigsnpr (v1.0.0). Then, we recall some of the pitfalls of PCA computation on genotype data and provide efficient solutions to these issues, which we implement in R packages bigsnpr and bigutilsr. These includes accouting for LD structure in PCA, detecting outliers in PC scores and projecting PCs to another study sample without shrinkage bias.
-
-[WHERE TO PUT THAT WE GET 40 PCs WHEN SUBSETTING?]
+For this paper, we derive implementations of truncated PCA and other useful functions for e.g.\ performing LD thinning and computing variant statistics. We make these available in a new release of R package bigsnpr (v1.0.0); what differs from previously available functions presented in \cite{prive2017efficient} is that these new functions can be used directly on bed/bim/fam PLINK files with some missing values. 
+We use them to analyse the UK Biobank data, and show that these functions are both very fast and easy to use. We also point out that many PCs currently reported by the UK Biobank capture LD structure instead of population structure. Interestingly, subsetting the UK Biobank data enables to get more PCs capturing population structure than when using the whole sample (\textasciitilde40 instead of \textasciitilde16).
+Then, we project the other individuals that were not used in the PCA calculation, show that this projection is biased and provide an efficient solution to get unbiased projections instead.
+Finally, we talk about detecting outlier samples in PCA, either a few outlier samples that may correspond to e.g.\ batch effects, or when the goal is to restrict the data to homogeneous individuals.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -127,7 +128,7 @@ For this paper, we derive a new implementation of PCA that can be used directly 
 \label{tab:method-overview}
 \begin{tabular}{|c|c|c|c|}
 \hline
-Analysis & Method and/or Software & Pros & Cons \\
+Analysis & Method and/or Software & Advantages & Limitations \\
 \hline
 \multirow{3}{*}{PCA} & bigstatsr / bigsnpr \cite[]{prive2017efficient} & \makecell{Fast and accurate + handle dosages \\ + thinning options directly included} & \makecell{Own format without missing values \\ (fast functions are available \\ for converting and imputing)} \\
  & FlashPCA2 \cite[]{abraham2017flashpca2} & Fast and accurate & Sequential implementation \\
@@ -150,16 +151,18 @@ Analysis & Method and/or Software & Pros & Cons \\
 
 When there is no missing value, we compute the partial Singular Value Decomposition (SVD) $U \Delta V^T$ of the scaled genotype matrix $\tilde{G}_{i,j} = \frac{G_{i,j} - 2 \hat{f_j}}{\sqrt{2 \hat{f_j} (1 - \hat{f_j})}}$ where $G_{i,j}$ is the allele count (genotype) of individual $i$ and variant $j$, and $\hat{f_j}$ is the estimated allele frequency of variant $j$ ($2 \hat{f_j}$ is the mean allele count of variant $j$). Then, $U \Delta$ are the first $K$ PC scores and $V$ are the first $K$ PC loadings, where $K$ is the number of PCs computed (e.g.\ $K=20$).
 
-When there is some missing values, we compute the partial SVD similarly, except that missing values are replaced by the variant means (i.e.\ $G_{i,j} - 2 \hat{f_j} = 0$ when $G_{i,j}$ is missing) and  the $\hat{f_j}$ for each variant are estimated using only non missing values of each variant.
+When there are some missing values, we compute the partial SVD similarly, except that missing values are replaced by the variant means (i.e.\ $G_{i,j} - 2 \hat{f_j} = 0$ when $G_{i,j}$ is missing) and  the $\hat{f_j}$ for each variant are estimated using only non missing values of each variant.
 Note that this decomposition is equivalent to the decomposition presented above after imputation by the variant means.
 
 To compute this decomposition easily and efficiently, we implement an accessor that memory-map the bed file to use it directly as if it were a standard matrix. Then, we apply the same algorithm for partial SVD that is used in R package bigstatsr \cite[]{prive2017efficient}.
 
 \subsection{Robust Mahalanobis distance \label{maha}}
 
-In this paper, for many applications, we use the pairwise orthogonalised Gnanadesikan-Kettenrin robust Mahalanobis distance as implemented in function \texttt{covRob} of R package robust with parameter \texttt{estim = "pairwiseGK"} \cite[]{gnanadesikan1972robust,yohai1988high,maronna2002robust,todorov2009object}. We reexport function \texttt{covRob} in R package bigutilsr for convenience.
-
-When computing these distances on $K$ approximately independent variables such as the first $K$ PC scores, the computed squared distances follow a $\chi^2(K)$ distribution.
+Mahalanobis distances are computed as $d(x)^2 = (x-\mu)^T \Sigma^{-1} (x-\mu),$ where $\mu$ and $\Sigma$ are (robust) estimators of location and covariance of $x$.
+We use these distances for many applications in this paper. 
+When $x$ is multivariate Gaussian data with $K$ dimensions, the squared distances follow a $\chi^2(K)$ distribution.
+If $x$ are PC scores of centered data and if we use standard estimates, then $\mu = 0$ and $\Sigma = I_K$.
+Yet, here we use the pairwise orthogonalised Gnanadesikan-Kettenrin robust Mahalanobis distance as implemented in function \texttt{covRob} of R package robust with parameter \texttt{estim = "pairwiseGK"} \cite[]{gnanadesikan1972robust,yohai1988high,maronna2002robust,todorov2009object}. We reexport function \texttt{covRob} in R package bigutilsr for convenience.
 
 \subsection{Detecting LD structure in PCA}
 
@@ -171,7 +174,7 @@ To capture consecutive outliers that corresponds to long-range LD regions, we ap
 
 Finally, to choose the threshold of outlierness based on the previously described statistics, we use a modified version of Tukey's rule, a standard rule for detecting outliers \cite[]{tukey77}. 
 The standard upper limit defined by Tukey's rule is $q_{75\%}(x) + 1.5 \cdot IQR(x)$, where $x$ is the vector of computed statistics and $IQR(x) = q_{75\%}(x) - q_{25\%}(x)$ is the interquartile range.
-One assumption of Tukey's rule is that the sample is normally distributed; we account for skewness in the data using the medcouple \cite[]{hubert2008adjusted}. 
+One assumption of Tukey's rule is that the sample is normally distributed; we account for skewness in the data using the medcouple as implemented in function \texttt{adjboxStats} of R package robustbase \cite[]{brys2004robust,hubert2008adjusted}. 
 Standard Tukey's rule also uses a fixed coefficient (1.5) that does not account for multiple testing, which means that there are always some outliers detected when using 1.5 for large samples. 
 To solve these two potential issues, we implement \texttt{tukey\_mc\_up} in R package bigutilsr and use it here, which accounts both for skewness and multiple testing by default.
 
@@ -182,8 +185,8 @@ This procedure is implemented in function \texttt{bed\_autoSVD} of R package big
 
 For detecting outlier samples in PCA, we use a modified version of the Probabilistic Local Outlier Factor (PLOF) statistic on PCs \cite[]{kriegel2009loop}. Using K nearest neighbours (KNN), this consists in comparing the distance from a point $j$ to its KNNs ($pd_j = \sqrt{\frac{1}{K} \sum_{k=1}^K d^2_{j \leftrightarrow j_k}}$, where $j_k$ is the $k$-th NN of $j$) with the distances from its KNNs to their KNNs ($\frac{1}{K} \sum_{k=1}^K pd_{j_k}$). The idea is that an outlier should be far from all other points, but this point is even more outlier if its KNNs are in a very dense cluster. 
 In practice, we use $pd_j / \sqrt{\frac{1}{K} \sum_{k=1}^K pd_{j_k}}$. Note the square root, as it otherwise detect any point next to a very dense cluster as an outlier.
-We implement this statistic in function \texttt{prob\_dist} of R package bigutilsr. To make it fast, we use the fast K nearest neighbours implementation of R package nabor \cite[]{elseberg2012comparison} and paralleliseit in function \texttt{knn\_parallel} of package bigutilsr.
-Automatic outlier detection is very hard, therefore we recommend users to choose a threshold of outlierness for this statistic based on visual inspection (histogram of these statistics and PC scores colored by these statistics).
+We implement this statistic in function \texttt{prob\_dist} of R package bigutilsr. To make it fast, we use the fast K nearest neighbours implementation of R package nabor \cite[]{elseberg2012comparison} and parallelise it in function \texttt{knn\_parallel} of package bigutilsr.
+Automatic outlier detection is difficult, therefore we recommend users to choose a threshold of outlierness for this statistic based on visual inspection (histogram of these statistics and PC scores colored by these statistics).
  
 For detecting samples that have a different ancestry from most of the samples in the data, i.e.\ for restricting to homogeneous samples, we compute the pairwise orthogonalised Gnanadesikan-Kettenrin robust Mahalanobis distances on PC scores (Section \ref{maha}). We then restrict to individuals whose log-distance (alternatively p-value) is smaller (larger) than some threshold determined based on visual inspection.
 
@@ -199,7 +202,7 @@ Note that the new individuals to be projected should not be related to the ones 
 We provide a subsetted version of the 1000 genomes (1000G) project data \cite[]{10002015global,meyer2019genotype}.
 Variants are restricted to the ones in common with HapMap3 or UK Biobank \cite[]{international2010integrating,bycroft2017genome}. 
 Moreover, we apply some quality control filters; we remove variants having a minor allele frequency < 0.01, variants with P-value of the Hardy-Weinberg exact test < $10^{-50}$, and non-autosomal variants. 
-To remove related individuals with second-degree relationship or more, we apply KING cutoff of 0.0884 to the data using PLINK 2.0 \cite[]{manichaikul2010robust,chang2015second}.
+To remove related individuals with second-degree relationship or more, we apply KING-relatedness cutoff of 0.0884 to the data using PLINK 2.0 \cite[]{manichaikul2010robust,chang2015second}.
 This results in 2490 individuals and 1,664,852 variants of the 1000G project (phase 3) in PLINK bed/bim/fam format. 
 Resulting PLINK files and R code to generate these files are available at \url{https://doi.org/10.6084/m9.figshare.9208979.v3}. 
 To easily download these data, we provide function \texttt{download\_1000G} in R package bigsnpr.
@@ -213,16 +216,23 @@ When removing related individuals, we use the list of individual pairs reported 
 
 \section{Results}
 
-\noindent[MOVE FIGURE TO MAIN TEXT? E.G. \ref{fig:UKBB-scores2}]
+\subsection{Application to the UK Biobank}
 
-\subsection{Performance}
-
-To show that we provide very fast implementations of the different methods presented in this paper, we apply them to the UK Biobank. We use 20 physical cores for most of the computations.
+To demonstrate that we provide very fast implementations of the different methods presented in this paper, we apply them to the UK Biobank. We use 20 physical cores for most of the computations.
 It takes 22 minutes to perform a first phase of clumping on 406,545 unrelated individuals genotyped over 504,139 variants, which reduces the number of variants to 261,307. It then takes 34 minutes to compute the first 20 PCs using these 261,307 variants.
 When performing the automatic procedure for LD detection, it takes 5 hours to perform the initial clumping step, 6 rounds of computation of PCs and 5 rounds of outlier variant detection (i.e.\ 5 iterations of outlier detection and one final computation of PCs).
 
-It takes 8 minutes to match the 1000G data to the UKBB data and compute 20 PCs of the 1000G data using the automatic LD detection technique. It takes 12 minutes more to do the OADP projection of all 488,371 individuals of the UKBB data to the PCA computed using the 1000G data.
+When applying our automatic procedure to remove long-range LD regions, it did not converge after 5 iterations, meaning that it kept detecting long-range LD regions at each iteration.
+Therefore, we were able to capture only 16 PCs that show stratification that is not LD structure (Figures \ref{fig:UKBB-screeplot}, \ref{fig:UKBB-scores} and \ref{fig:UKBB-loadings}).
+Interestingly, PC loadings reported by the UK Biobank clearly show that PC19 to PC40 capture LD structure, which is also the case for PC16 and PC18, although less pronounced (see peaks in figure \ref{fig:UKBB-loadings40}). 
 
+\begin{figure}[!htpb]
+\centerline{\includegraphics[width=0.9\textwidth]{UKBB-loadings1-40.pdf}}
+\caption{Principal Component (PC) loadings 1 to 40 reported by the UK Biobank.
+\label{fig:UKBB-loadings40}}
+\end{figure}
+
+As for other analyses, it takes 8 minutes to match the 1000G data to the UKBB data and compute 20 PCs of the 1000G data using the automatic LD detection technique. It takes 12 minutes more to do the OADP projection of all 488,371 individuals of the UKBB data onto the PCA computed using the 1000G data.
 Finally, it takes only 6 minutes to compute the 30-Nearest Neighbours of 20 PC scores for 406,545 UK Biobank individuals, which is the main computational aspect of computing statistics for detecting individual outlier samples (Section \ref{outlier-sample}).
 
 \subsection{Outlier sample detection}
@@ -240,12 +250,12 @@ In contrast, 416,492 out of 431,090 ``British'' (96.6\%) and 12,620 out of 12,75
 \subsection{Projecting PCs from a reference dataset}
 
 We use 60\% of individuals in the 1000G data (section \ref{1000G}) to compute the PCA ($K=20$ PCs). Then, we project the remaining 40\% individuals using three methods: 1/ simply multiplying the genotypes of these individuals by the previously computed loadings, 2/ correcting the simple projections using asymptotic shrinkage factors as determined by R package hdpca v1.1.3 \cite[]{dey2019asymptotic}, with all eigenvalues derived from the Genetic Relationship Matrix (GRM) computed with function \texttt{bed\_tcrossprodSelf} of R package bigsnpr, and 3/ the OADP projection (section \ref{proj}). 
-When simply projecting using loadings, there is no apparent shrinkage for PC1 and PC2, a weak [REWORD?] shrinkage for PC3 and PC4, and a large shrinkage for PC5 to PC8 (Figure \ref{fig:proj1000G}). [USE VALUES?]
+When simply projecting using loadings, there is negligible shrinkage for PC1 and PC2, a small shrinkage for PC3 and PC4, and a large shrinkage for PC5 to PC8 (Figure \ref{fig:proj1000G}).
 In contrast, there is no apparent shrinkage when projecting new individuals with OADP (Figure \ref{fig:proj1000G}).
 Simple projection is affected even more by this shrinkage for PC9 to PC20, while OADP appears free of this issue (Figure \ref{fig:proj1000G-2}).
 We show the same results when projecting the full UK Biobank data onto PCA computed using 1000G data  (Figure \ref{fig:proj1000G-5}).
 When correcting projected PC scores with asymptotic shrinkage factors, bias is smaller than when simply projecting loadings, yet, there is an apparent bias for PC7-8 (Figure \ref{fig:proj1000G-3}).
-Finally, to assess if OADP could be used to project individuals that are related to some individuals that were used to compute PCA, we projected these 60\% individuals (as if we were projecting their monozygotic twins) using OADP. Projections of related individuals using OADP shows some reverse [REWORD?] shrinkage (Figure \ref{fig:proj1000G-4}).
+Finally, to assess if OADP could be used to project individuals that are related to some individuals that were used to compute PCA, we projected these 60\% individuals (as if we were projecting their monozygotic twins) using OADP. Projections of related individuals using OADP shows some bias in reverse direction (Figure \ref{fig:proj1000G-4}).
 
 When computing the PCA on the UK Biobank using 406,545 unrelated individuals and 171,977 variants, and projecting the 1000G data onto this reference PCA space, shrinkage is much smaller ($\leq 1.08$ for all 20 first PCs, Figure \ref{fig:proj1000G-6}).
 
@@ -255,20 +265,24 @@ When computing the PCA on the UK Biobank using 406,545 unrelated individuals and
 Black points are the 60\% individuals used for computing PCA.
 Red points are the 40\% remaining individuals, projected by simply multiplying their genotypes by the corresponding PC loadings.
 Blue points are the 40\% remaining individuals, projected using the Online Augmentation, Decomposition, and Procrustes (OADP) transformation.
+Estimated shrinkage coefficients for these 8 PCs are 1.01 (PC1), 1.02, 1.06, 1.09, 1.50 (PC5), 1.69, 1.98 and 1.39.
 \label{fig:proj1000G}}
 \end{figure}
 
 
-\subsection{PCA of the UK Biobank}
+\subsection{Capturing subtle population structure in the UK Biobank}
 
-Principal Component loadings reported by the UK Biobank clearly show that PC19 to PC40 capture LD structure, which is also the case for PC16 and PC18, although less pronounced (see peaks in figure \ref{fig:UKBB-loadings40}). 
-When applying our automatic procedure to remove long-range LD regions, it did not converge after 5 iterations, meaning that it kept detecting long-range LD regions at each iteration. Therefore, we were able to capture only 16 PCs that shows population stratification and not LD structure (Figures \ref{fig:UKBB-screeplot}, \ref{fig:UKBB-scores} and \ref{fig:UKBB-loadings}).
-
-Then, we computed again PCA after restricting the individuals included in the computations: we randomly subsampled UKBB data to use only 10,000 British individuals (out of 431,029) and 5000 Irish individuals (out of 12,755), while keeping all individuals with other or unkonwn self-reported ancestry. 
+We recomputed PCA in the UK Biobank after restricting the individuals included in the computations: we randomly subsampled UKBB data to use only 10,000 British individuals (out of 431,029) and 5000 Irish individuals (out of 12,755), while keeping all individuals with other or unkonwn self-reported ancestry. 
 We further removed all pairs of related individuals reported by the UKBB (both individuals in each pair). 
 This resulted in 48,942 individuals that we used to compute 50 PCs, which took less than 3 hours using function \texttt{bed\_autoSVD} (that converged after 4 iterations of automatic LD removal). 
 We show that we are able to capture more PCs (at least 40) that display visual population structure (Figures \ref{fig:UKBB-scores2} and \ref{fig:UKBB-screeplot2}).
 We then projected all 439,429 remaining individuals from UKBB onto this PCA space in 21 minutes only using our implementation of the OADP projection. Note that these individuals should not be related to any of the 48,942 individuals used for training PCA because we removed both individuals from each pair of related individuals in UKBB. Projection of new individuals show again a clear shrinkage when using simple projection (between 1.00 for PC1 and 1.80 for PC50), but no visible bias when using OADP projection (Figure \ref{fig:projUKBB-related}).
+
+\begin{figure}[!htpb]
+\centerline{\includegraphics[width=0.9\textwidth]{UKBB-scores-restricted.png}}
+\caption{Principal Component (PC) scores 27 to 50 computed on the UK Biobank using 48,942 individuals of diverse ancestries. Different colors represent different self-reported ancestries.
+\label{fig:UKBB-scores2}}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -280,13 +294,13 @@ We then projected all 439,429 remaining individuals from UKBB onto this PCA spac
 \label{fig:pipeline}}
 \end{figure}
 
-In this work, we have compiled different pitfalls that can occur with analyses related to Principal Component Analysis (PCA) of genetic data. Then, we have investigated possible solutions to these pitfalls and chose the ones that we thought to be the most relevant both with respect to properties such as accuracy and robustness, but also that would be fast and easy to use. We then implemented these solutions in open-source R packages. 
-These functions can be directly used on genotypes stored as PLINK bed/bim/fam files with some missing values. 
-This is in contrast with our first release of packages bigstatsr and bigsnpr that use their own ``bigSNP'' format that can store both genotype calls and (rounded) dosages, but that mostly provide functions that require no missing value.
-Yet, PCA is a useful tool on its own and does not require extensive imputed data, therefore we decided that operating directly on PLINK files with a few missing values would be more practical for the users.
+In this work, we have compiled different pitfalls that can arise with analyses related to Principal Component Analysis (PCA) of genetic data. Then, we have investigated possible solutions to these pitfalls and chose the ones that we found most relevant, both with respect to properties such as accuracy and robustness, but also that would be fast and easy to use. We then implemented these solutions in open-source R packages. 
+The new functions we provide can be directly applied to genotypes stored as PLINK bed/bim/fam files with some missing values.
+This contrasts with previous releases of package bigsnpr that could use only one custom data format called ``bigSNP''. This data format can store both genotype calls and dosages, but requires conversion from other formats and imputation of missing values using functions provided in the package \cite[]{prive2017efficient}.
+As PCA is a useful tool on its own and does not require extensive imputed data, therefore we decided that operating directly on PLINK files with a few missing values would be more practical for users.
 
-As a general recommendation for computing PCA, we show some pipeline in figure \ref{fig:pipeline}. [START WITH QC?]
-This requires removing all related individuals, for which we provide an R wrapper to PLINK's implementation of KING robust kinship coefficients \cite[]{manichaikul2010robust,chang2015second}. 
+As a general recommendation for computing PCA, we propose the pipeline shown in figure \ref{fig:pipeline}. Note that we have not included standard steps such as initial quality control and post-analysis checks (e.g.\ visual inspection of different plots).
+This pipeline requires removing all related individuals, for which we provide an R wrapper to PLINK's implementation of KING robust kinship coefficients \cite[]{manichaikul2010robust,chang2015second}. 
 Note that one should remove both individuals in each related pairs so that projected individuals at the end are not related to the ones used for computing PCA, as we showed that relatedness is a problem when using the OADP projection.
 Then, it requires to do several steps of outlier detection, one for outlier variants that capture long-range LD variation (automatic), and one for detecting outlier samples (semi-automatic and visual).
 To fasten these steps, we tried hard to come up with a solution for not recomputing PCA from scratch when removing a few samples or variants. Using educated guesses based on low-rank approximations seemed to be a promising approach but did not fasten computation by much, so we did not pursue this idea \cite[]{brand2003fast,wu2017primme}. 
@@ -303,6 +317,8 @@ When the homogeneous sample is not predominant in the dataset, one solution is t
 
 Finally, we have showed some pitfalls when computing PCA on genotype data, yet we think most of the results in this paper are not inherent to genotype data, and can be transferred to e.g.\ other omics data as well. For example, outlier and homogeneous sample detection can be used on PCs of anything. Moreover, projection of scores will also be a problem for other omics data where the number of variables used is larger than the number of samples used for computing PCA. Finally, our recommendation of gathering ``populations'' of approximately the same size is relevant for other biological data as well.
 However, other pitfalls might apply when using other types of data; for example, methylation data can be confounded by factors such as age and sex, and it might be benificial to remove some probes that are associated with these confounding factors before computing PCA \cite[]{decamps2019guidelines}.
+
+[ADD? ``Another application of PCA is capture unmeasured confounders in RNAseq analyses, e.g. Pickrell et al., Natue 2010, and Kang et al., Genetics 2008.  (It's perhaps not the state-of-the-art today, but it's still common.)'']
 
 \noindent[DISCUSS ABOUT PC16 -> FROM DIFFERENT ASSESSMENT CENTRES -> 36\% correlation with number of NA for all PC16 > 30]
 
@@ -486,6 +502,7 @@ Prefer not to answer & 484 & 1013 & 1062 & 1099 & 1139 & 1177 & 1279 & 1405 & 14
 Black points are the 60\% individuals used for computing PCA.
 Red points are the 40\% remaining individuals, projected by simply multiplying their genotypes by the corresponding PC loadings.
 Blue points are the 40\% remaining individuals, projected using the Online Augmentation, Decomposition, and Procrustes (OADP) transformation.
+Estimated shrinkage coefficients (comparing red and blue points) for these PCs are 2.79, 3.14 (PC10), 3.64, 3.18, 2.47, 3.88, 5.31, 5.84, 3.45, 6.55, 3.68 and 6.70 (PC20).
 \label{fig:proj1000G-2}}
 \end{figure}
 
@@ -495,7 +512,7 @@ Blue points are the 40\% remaining individuals, projected using the Online Augme
 \centerline{\includegraphics[width=0.9\textwidth]{proj1000G-PC5-12.pdf}}
 \caption{Principal Component (PC) scores 5 to 12 of the 1000 Genomes project.
 Black points are the 60\% individuals used for computing PCA.
-Green points are the 40\% remaining individuals, projected by multiplying their genotypes by the corresponding PC loadings, further corrected using theoritical asymptotic shrinkage factors.
+Green points are the 40\% remaining individuals, projected by multiplying their genotypes by the corresponding PC loadings, further corrected using theoritical asymptotic shrinkage factors (values for the first 12 PCs: 1.01 (PC1), 1.02, 1.07, 1.10, 1.43 (PC5), 1.54, 1.74, 1.79, 2.47, 2.77 (PC10), 2.84 and 3.15).
 Blue points are the 40\% remaining individuals, projected using the Online Augmentation, Decomposition, and Procrustes (OADP) transformation.
 \label{fig:proj1000G-3}}
 \end{figure}
@@ -512,7 +529,9 @@ Blue points are the same 60\% individuals, projected using the Online Augmentati
 \centerline{\includegraphics[width=0.9\textwidth]{proj1000G-UKBB.png}}
 \caption{Principal Component (PC) scores 1 to 16 of the 1000 Genomes project and projected individuals from the UK Biobank.
 Black points are PC scores of 1000G individuals used for computing PCA.
+Red points are the individuals from UKBB, projected by simply multiplying their genotypes by the corresponding PC loadings.
 Blue points are the 488,371 individuals from the UK Biobank, projected using the Online Augmentation, Decomposition, and Procrustes (OADP) transformation. 
+Estimated shrinkage coefficients (comparing red and blue points) for the first 20 PCs are 1.01 (PC1), 1.02, 1.06, 1.08, 1.36 (PC5), 1.82, 2.33, 2.36, 2.78, 2.84 (PC10), 2.99, 3.51, 4.38, 4.67, 4.99, 5.31, 5.74, 6.55, 6.71 and 6.75 (PC20).
 Note that only 20,000 random projected individuals are represented in this plot.
 \label{fig:proj1000G-5}}
 \end{figure}
@@ -523,18 +542,13 @@ Note that only 20,000 random projected individuals are represented in this plot.
 Black points are the UK Biobank individuals used for computing PCA.
 Red points are the individuals from 1000G, projected by simply multiplying their genotypes by the corresponding PC loadings.
 Blue points are the individuals from 1000G, projected using the Online Augmentation, Decomposition, and Procrustes (OADP) transformation.
+Estimated shrinkage coefficients (comparing red and blue points) for the first 20 PCs are 1.00 (PC1), 1.00, 1.00, 1.01, 1.01 (PC5), 1.02, 1.03, 1.03, 1.04, 1.04 (PC10), 1.04, 1.05, 1.05, 1.06, 1.07, 1.07, 1.08, 1.08, 1.08 and 1.08 (PC20).
 \label{fig:proj1000G-6}}
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \newpage
-
-\begin{figure}[!htpb]
-\centerline{\includegraphics[width=0.9\textwidth]{UKBB-loadings1-40.pdf}}
-\caption{Principal Component (PC) loadings 1 to 40 reported by the UK Biobank.
-\label{fig:UKBB-loadings40}}
-\end{figure}
 
 \begin{figure}[!htpb]
 \centerline{\includegraphics[width=0.8\textwidth]{UKBB-screeplot.pdf}}
@@ -561,12 +575,6 @@ Different colors represent different self-reported ancestries.
 \centerline{\includegraphics[width=0.8\textwidth]{UKBB-screeplot-restricted.pdf}}
 \caption{Scree plot: plot of singular values computed on the UK Biobank using 48,942 individuals of diverse ancestries.
 \label{fig:UKBB-screeplot2}}
-\end{figure}
-
-\begin{figure}[!htpb]
-\centerline{\includegraphics[width=0.9\textwidth]{UKBB-scores-restricted.png}}
-\caption{[SHOULD BE MAIN FIGURE?] Principal Component (PC) scores 27 to 50 computed on the UK Biobank using 48,942 individuals of diverse ancestries. Different colors represent different self-reported ancestries.
-\label{fig:UKBB-scores2}}
 \end{figure}
 
 \begin{figure}[!htpb]
