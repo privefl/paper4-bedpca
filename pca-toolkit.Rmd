@@ -206,6 +206,58 @@ knitr::include_graphics("figures/proj1000G-related.svg")
 
 ---
 
+## Pipeline to compute PCs
+
+```{r, out.width="55%"}
+knitr::include_graphics("figures/PCA-pipeline.svg")
+```
+
+---
+
+## Remaining problem: what is really PC16?
+
+```{r, out.width="85%"}
+knitr::include_graphics("figures/UKBB-PC1-20.png")
+```
+
+---
+
+## Facts about PC16
+
+<br>
+
+- unchanged if we impute randomly (using allele frequencies)
+
+- People with PC16 > 30
+
+    - have 36% correlation between PC16 and number of NAs per individuals (also 13% for PC1, 12% for PC3, 11% for PC13 and 14)
+    
+    - from almost all assessment centers (data-field 54), batches (data-field 22000) and plates (data-field 22007)
+    
+    - from different ancestries (data-field 21000)
+    
+    - have between 0.2% and 3.7% of missing values
+    
+- loadings are almost all positives (not symmetric)
+
+---
+
+## Possible explanation: heterozygosity
+
+```{r, out.width="90%"}
+knitr::include_graphics("figures/het-PC16.png")
+```
+
+---
+
+## Possible explanation: heterozygosity
+
+```{r, out.width="90%"}
+knitr::include_graphics("figures/het-NA.png")
+```
+
+---
+
 class: inverse, center, middle
 
 # Thanks!

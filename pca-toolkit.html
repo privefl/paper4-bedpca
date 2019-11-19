@@ -182,6 +182,50 @@ PCA on 60% of 1000G (**black**) / OADP projection on same 60% (**blue**):
 
 ---
 
+## Pipeline to compute PCs
+
+&lt;img src="figures/PCA-pipeline.svg" width="55%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Remaining problem: what is really PC16?
+
+&lt;img src="figures/UKBB-PC1-20.png" width="85%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Facts about PC16
+
+&lt;br&gt;
+
+- unchanged if we impute randomly (using allele frequencies)
+
+- People with PC16 &gt; 30
+
+    - have 36% correlation between PC16 and number of NAs per individuals (also 13% for PC1, 12% for PC3, 11% for PC13 and 14)
+    
+    - from almost all assessment centers (data-field 54), batches (data-field 22000) and plates (data-field 22007)
+    
+    - from different ancestries (data-field 21000)
+    
+    - have between 0.2% and 3.7% of missing values
+    
+- loadings are almost all positives (not symmetric)
+
+---
+
+## Possible explanation: heterozygosity
+
+&lt;img src="figures/het-PC16.png" width="90%" style="display: block; margin: auto;" /&gt;
+
+---
+
+## Possible explanation: heterozygosity
+
+&lt;img src="figures/het-NA.png" width="90%" style="display: block; margin: auto;" /&gt;
+
+---
+
 class: inverse, center, middle
 
 # Thanks!
