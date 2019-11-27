@@ -82,7 +82,7 @@
 \item \url{bjv@econ.au.dk}
 \end{itemize}
 
-\newpage
+\clearpage
 
 \abstract{
 Principal Component Analysis (PCA) of genetic data is routinely used to infer ancestry and control for population structure in various genetic analyses. However, conducting PCA analyses can be complicated and has several potential pitfalls. These pitfalls include (1) capturing Linkage Disequilibrium (LD) structure instead of population structure, (2) projected PCs that suffer from shrinkage bias when projecting PCA from a reference dataset to another independent dataset, (3) detecting sample outliers, and (4) uneven population sizes. In this work, we explore these potential issues when using PCA, and present efficient solutions to these. Following applications to the UK Biobank and the 1000 Genomes project datasets, we make recommendations for best practices and provide efficient and user-friendly implementations of the proposed solutions in R packages bigsnpr and bigutilsr.
@@ -99,7 +99,7 @@ Overall, we believe this work would be of interest for anyone using PCA in their
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\newpage
+\clearpage
 
 \section{Introduction}
 
@@ -389,14 +389,14 @@ The other authors declare no competing interests.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\newpage
+\clearpage
 
 \bibliographystyle{natbib}
 \bibliography{refs}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\newpage
+\clearpage
 \section*{Supplementary Materials}
 
 \renewcommand{\thefigure}{S\arabic{figure}}
@@ -423,9 +423,7 @@ As $U^T U = I$, we note that $(U \Delta)^T \widetilde{U} = \Delta V_2[1{:}K,~]$ 
 
 \clearpage
 
-\subsection*{Supplementary figures}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection*{Sample outlier detection}
 
 \begin{figure}[htbp]
 \centering
@@ -448,7 +446,7 @@ As $U^T U = I$, we note that $(U \Delta)^T \widetilde{U} = \Delta V_2[1{:}K,~]$ 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\newpage
+\clearpage
 
 \begin{figure}[htbp]
 \centering
@@ -514,7 +512,8 @@ Prefer not to answer & 484 & 1013 & 1062 & 1099 & 1139 & 1177 & 1279 & 1405 & 14
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\newpage
+\clearpage
+\subsection*{Projection onto reference PCA space}
 
 \begin{figure}[!htpb]
 \centerline{\includegraphics[width=0.9\textwidth]{proj1000G-PC9-20.pdf}}
@@ -568,7 +567,9 @@ Estimated shrinkage coefficients (comparing red and blue points) for the first 2
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\newpage
+\clearpage
+
+\subsection*{PCA of the UK Biobank}
 
 \begin{figure}[!htpb]
 \centerline{\includegraphics[width=0.8\textwidth]{UKBB-screeplot.pdf}}
@@ -590,6 +591,86 @@ Different colors represent different self-reported ancestries.
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\clearpage
+
+\begin{figure}[!htpb]
+\centerline{\includegraphics[width=0.8\textwidth]{het-col-PC16.png}}
+\caption{PC-corrected heterozygosity and number of missing values for individuals of the UK Biobank, colored by their value for PC16.
+\label{fig:UKBB-het}}
+\end{figure}
+
+% latex table generated in R 3.6.0 by xtable 1.8-4 package
+% Wed Nov 27 15:52:34 2019
+\begin{table}[ht]
+\caption{Correlation between first 20 PC scores of the UK Biobank, both computed using the genotyping chip and mean imputation, but wtih either no quality control on individuals based on high heterozygosity (top), or after removing some individuals based on high heterozygosity (left). PC16 computed without quality control on high heterozygosity completely disappears when performing this quality control.
+\label{tab:pca-het}}
+\centering
+\begin{tabular}{|r|rrrrrrrrrrrrrrrrrrrr|}
+  \hline
+ & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 & 13 & 14 & 15 & 16 & 17 & 18 & 19 & 20 \\ 
+  \hline
+1 & 100.0 & -0.2 & 0.1 & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & -0.0 & -0.0 & 0.0 & 0.0 & -0.0 & -0.0 & -0.0 & -0.3 & -0.0 & 0.0 & 0.0 & 0.0 \\ 
+  2 & 0.1 & 100.0 & 0.2 & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & -0.1 & 0.0 & -0.0 & 0.0 & -0.0 & -0.0 & 0.0 & -0.0 & -0.0 & 0.0 & 0.0 \\ 
+  3 & -0.0 & -0.1 & 100.0 & -0.0 & 0.0 & -0.0 & -0.0 & -0.0 & -0.0 & 0.1 & -0.0 & 0.0 & 0.0 & -0.0 & -0.0 & -0.3 & 0.0 & 0.0 & -0.0 & -0.0 \\ 
+  4 & -0.0 & -0.0 & 0.0 & 100.0 & -0.0 & 0.0 & 0.0 & 0.0 & -0.0 & -0.0 & 0.0 & 0.0 & -0.0 & -0.0 & -0.0 & 0.1 & 0.0 & 0.0 & 0.0 & 0.0 \\ 
+  5 & 0.0 & -0.0 & -0.0 & 0.0 & 100.0 & 0.0 & -0.0 & 0.0 & 0.0 & -0.0 & -0.0 & 0.0 & 0.0 & 0.0 & -0.0 & 0.1 & -0.0 & -0.0 & -0.0 & 0.0 \\ 
+  6 & -0.0 & -0.0 & 0.0 & -0.0 & -0.0 & 100.0 & -0.3 & 0.4 & -0.0 & 0.0 & -0.0 & 0.0 & -0.0 & -0.0 & 0.0 & -0.1 & 0.0 & -0.0 & -0.0 & 0.0 \\ 
+  7 & -0.0 & -0.0 & 0.0 & -0.0 & 0.0 & 0.3 & 100.0 & -0.2 & -0.0 & 0.2 & -0.1 & -0.1 & 0.0 & 0.0 & 0.0 & 0.3 & -0.0 & -0.0 & 0.0 & -0.0 \\ 
+  8 & -0.0 & -0.0 & 0.0 & -0.0 & -0.0 & -0.4 & 0.2 & 100.0 & 0.0 & 0.2 & -0.1 & -0.0 & 0.0 & 0.0 & 0.0 & 0.2 & 0.0 & 0.0 & -0.0 & 0.0 \\ 
+  9 & 0.0 & -0.0 & 0.0 & 0.0 & -0.0 & 0.0 & 0.0 & -0.0 & 100.0 & 0.2 & -0.0 & 0.0 & -0.0 & -0.0 & 0.0 & -0.5 & -0.0 & 0.0 & -0.0 & 0.0 \\ 
+  10 & 0.0 & 0.0 & -0.0 & 0.0 & 0.0 & -0.0 & -0.1 & -0.1 & -0.2 & 100.0 & 0.4 & -0.1 & 0.1 & 0.0 & 0.0 & 0.8 & -0.0 & -0.0 & 0.0 & 0.0 \\ 
+  11 & -0.0 & -0.0 & 0.0 & -0.0 & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & -0.3 & 100.0 & 0.2 & -0.1 & -0.0 & -0.0 & -0.2 & 0.0 & 0.0 & -0.0 & 0.0 \\ 
+  12 & -0.0 & 0.0 & -0.0 & -0.0 & -0.0 & -0.0 & 0.0 & 0.0 & -0.0 & 0.1 & -0.1 & 100.0 & -0.3 & 0.1 & 0.0 & 1.7 & -0.0 & -0.1 & -0.0 & -0.0 \\ 
+  13 & 0.0 & -0.0 & -0.0 & 0.0 & -0.0 & 0.0 & -0.0 & -0.0 & 0.0 & -0.0 & 0.0 & 0.3 & 100.0 & -0.4 & -0.1 & -2.8 & 0.0 & 0.0 & 0.1 & 0.0 \\ 
+  14 & 0.0 & 0.0 & 0.0 & 0.0 & -0.0 & 0.0 & -0.0 & -0.0 & -0.0 & -0.0 & 0.0 & -0.1 & 0.4 & 100.0 & -0.0 & -1.8 & 0.0 & 0.0 & 0.0 & -0.0 \\ 
+  15 & 0.0 & 0.0 & -0.0 & 0.0 & 0.0 & -0.0 & 0.0 & -0.0 & -0.0 & -0.0 & 0.0 & -0.0 & 0.0 & -0.0 & 100.0 & -2.1 & 0.1 & -0.0 & 0.0 & 0.0 \\ 
+  16 & 0.0 & 0.0 & -0.0 & -0.0 & 0.0 & -0.0 & 0.0 & -0.0 & 0.0 & 0.0 & -0.0 & 0.0 & 0.0 & 0.0 & -0.0 & 1.3 & 100.0 & 0.6 & -0.1 & -0.3 \\ 
+  17 & -0.0 & -0.0 & -0.0 & 0.0 & -0.0 & -0.0 & -0.0 & 0.0 & -0.0 & -0.0 & 0.0 & 0.0 & -0.0 & -0.0 & -0.1 & -5.0 & 0.7 & -99.9 & -0.8 & -0.2 \\ 
+  18 & 0.0 & 0.0 & -0.0 & 0.0 & -0.0 & -0.0 & 0.0 & 0.0 & -0.0 & 0.0 & -0.0 & 0.0 & -0.0 & -0.0 & -0.0 & -2.9 & 0.0 & 0.9 & -99.5 & 8.7 \\ 
+  19 & 0.0 & 0.0 & -0.0 & 0.0 & 0.0 & 0.0 & -0.0 & 0.0 & 0.0 & 0.0 & 0.0 & -0.0 & 0.0 & -0.0 & 0.0 & -0.3 & -0.2 & 0.3 & -8.6 & -99.6 \\ 
+  20 & 0.0 & 0.0 & -0.0 & 0.0 & -0.0 & -0.0 & -0.0 & 0.0 & 0.0 & 0.0 & 0.0 & -0.0 & 0.0 & 0.0 & 0.1 & 7.3 & -0.8 & -0.3 & -4.4 & -0.3 \\ 
+   \hline
+\end{tabular}
+\end{table}
+
+% latex table generated in R 3.6.0 by xtable 1.8-4 package
+% Wed Nov 27 16:04:03 2019
+\begin{table}[ht]
+\caption{Correlation between first 20 PC scores of the UK Biobank, either computed using the genotyping chip and mean imputation (top), or computed from the dosages (based on imputation from an external reference panel) of the same variants (left). PCs are globally the same.
+\label{tab:pca-dosage}}
+\centering
+\begin{tabular}{|r|rrrrrrrrrrrrrrrrrrrr|}
+  \hline
+ & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 & 13 & 14 & 15 & 16 & 17 & 18 & 19 & 20 \\ 
+  \hline
+1 & -100.0 & -0.1 & -0.1 & 0.0 & -0.0 & 0.0 & -0.0 & -0.0 & -0.0 & 0.0 & -0.0 & -0.0 & -0.0 & -0.0 & -0.0 & -0.0 & 0.0 & 0.0 & 0.0 & -0.0 \\ 
+  2 & 0.1 & -100.0 & -0.2 & -0.0 & -0.0 & -0.0 & 0.0 & -0.0 & 0.0 & -0.0 & 0.0 & 0.0 & 0.0 & -0.0 & 0.0 & 0.0 & -0.0 & -0.0 & -0.0 & 0.0 \\ 
+  3 & -0.1 & -0.2 & 100.0 & -0.2 & 0.0 & 0.0 & 0.1 & 0.0 & 0.0 & 0.0 & -0.0 & 0.0 & 0.0 & -0.0 & -0.0 & 0.0 & 0.0 & -0.0 & 0.0 & -0.0 \\ 
+  4 & 0.0 & -0.0 & 0.2 & 100.0 & 0.1 & 0.0 & -0.1 & -0.0 & 0.0 & 0.1 & -0.0 & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & -0.0 & 0.0 & -0.0 & 0.0 \\ 
+  5 & 0.0 & 0.0 & 0.0 & 0.1 & -100.0 & 0.0 & -0.0 & -0.0 & 0.0 & 0.0 & -0.0 & -0.0 & 0.0 & 0.0 & 0.0 & -0.0 & 0.0 & 0.0 & -0.0 & -0.0 \\ 
+  6 & -0.0 & -0.0 & -0.0 & -0.0 & 0.0 & 99.9 & -2.7 & 2.0 & -0.0 & -0.0 & -0.0 & 0.0 & -0.0 & 0.0 & 0.0 & -0.0 & 0.0 & 0.0 & -0.0 & -0.0 \\ 
+  7 & -0.0 & -0.0 & -0.1 & 0.1 & -0.0 & 2.6 & 99.9 & 3.3 & -0.1 & -0.1 & 0.0 & -0.0 & 0.0 & 0.0 & -0.0 & -0.0 & 0.0 & -0.0 & 0.0 & -0.0 \\ 
+  8 & 0.0 & 0.0 & -0.0 & 0.0 & -0.0 & -2.1 & -3.2 & 99.9 & 0.2 & -0.2 & 0.0 & -0.0 & -0.0 & -0.0 & -0.0 & -0.0 & -0.0 & -0.0 & 0.0 & -0.0 \\ 
+  9 & -0.0 & -0.0 & -0.0 & -0.0 & -0.0 & 0.0 & 0.1 & -0.2 & 100.0 & -0.0 & -0.0 & -0.0 & -0.0 & -0.0 & 0.0 & -0.0 & 0.0 & 0.0 & 0.0 & 0.0 \\ 
+  10 & -0.0 & 0.0 & 0.1 & 0.0 & -0.0 & -0.0 & -0.1 & -0.1 & -0.0 & -99.9 & -0.3 & -0.1 & 0.0 & -0.0 & 0.0 & -0.0 & -0.0 & -0.0 & -0.0 & -0.0 \\ 
+  11 & 0.0 & -0.0 & -0.0 & -0.0 & 0.0 & -0.0 & 0.0 & 0.0 & -0.0 & 0.4 & -99.9 & 0.2 & 0.1 & 0.0 & 0.0 & -0.0 & -0.0 & -0.0 & 0.0 & -0.0 \\ 
+  12 & 0.0 & -0.0 & -0.0 & 0.0 & -0.0 & 0.0 & -0.0 & -0.0 & -0.0 & 0.1 & -0.2 & -99.9 & 0.7 & -0.0 & 0.1 & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 \\ 
+  13 & -0.0 & 0.0 & -0.0 & -0.0 & -0.0 & 0.0 & -0.0 & 0.0 & 0.0 & 0.0 & 0.1 & 0.7 & 99.9 & 2.1 & 0.0 & -0.0 & 0.0 & -0.1 & -0.0 & 0.0 \\ 
+  14 & -0.0 & -0.0 & 0.0 & 0.0 & 0.0 & -0.0 & -0.0 & 0.0 & 0.0 & -0.0 & 0.0 & -0.0 & -2.1 & 99.9 & -0.1 & -0.0 & 0.0 & -0.0 & 0.0 & 0.0 \\ 
+  15 & -0.0 & -0.0 & -0.0 & 0.0 & 0.0 & -0.0 & -0.0 & 0.0 & -0.0 & 0.0 & 0.0 & 0.1 & -0.0 & 0.1 & 99.9 & 0.1 & 0.0 & -0.1 & 0.1 & 0.1 \\ 
+  16 & -0.0 & 0.0 & -0.0 & 0.0 & 0.0 & -0.0 & -0.0 & -0.0 & -0.0 & -0.0 & -0.0 & -0.0 & -0.0 & -0.0 & 0.0 & -99.7 & 6.4 & 0.8 & 0.9 & -1.3 \\ 
+  17 & -0.0 & 0.0 & -0.0 & 0.0 & 0.0 & -0.0 & 0.0 & 0.0 & 0.0 & 0.0 & -0.0 & 0.0 & -0.0 & -0.0 & -0.0 & 6.4 & 99.6 & -1.0 & 2.4 & 0.5 \\ 
+  18 & 0.0 & -0.0 & -0.0 & 0.0 & -0.0 & -0.0 & 0.0 & -0.0 & 0.0 & 0.0 & 0.0 & -0.0 & -0.1 & -0.0 & -0.1 & -0.9 & -0.9 & -99.6 & -5.0 & 4.0 \\ 
+  19 & 0.0 & -0.0 & -0.0 & 0.0 & 0.0 & -0.0 & 0.0 & 0.0 & 0.0 & 0.0 & 0.0 & -0.0 & -0.0 & 0.0 & 0.1 & -0.6 & 2.5 & 4.9 & -99.5 & -6.2 \\ 
+  20 & -0.0 & 0.0 & 0.0 & 0.0 & -0.0 & -0.0 & 0.0 & 0.0 & -0.0 & -0.0 & -0.0 & 0.0 & -0.0 & -0.0 & -0.0 & -1.4 & -0.2 & 4.3 & -6.0 & 99.5 \\ 
+   \hline
+\end{tabular}
+\end{table}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\clearpage
 
 \begin{figure}[!htpb]
 \centerline{\includegraphics[width=0.8\textwidth]{UKBB-screeplot-restricted.pdf}}
