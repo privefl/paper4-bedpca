@@ -8,8 +8,9 @@ fam <- fread2("data/ukbb_bed/ukbb_488282.fam")
 ind.row <- which(!fam$V2 %in% rel$ID2)
 obj.bed <- bed("data/ukbb_bed/ukbb_488282.bed")
 
-system.time(
-  obj.svd <- bed_autoSVD(obj.bed, ind.row = ind.row, k = 20, ncores = nb_cores())
+obj.svd <- runonce::save_run(
+  bed_autoSVD(obj.bed, ind.row = ind.row, k = 20, ncores = nb_cores()),
+  file = "tmp-results/SVD_UKBB.rds"
 ) # 5h
 # Phase of clumping (on MAC) at r^2 > 0.2.. keep 261306 variants.
 # Discarding 0 variant with MAC < 10.
@@ -43,7 +44,6 @@ system.time(
 # Computing SVD..
 # Maximum number of iterations reached.
 
-# saveRDS(obj.svd, "tmp-results/SVD_UKBB.rds")
 
 system.time(
   ind.keep2 <- bed_clumping(obj.bed, ind.row = ind.row, ncores = nb_cores())
@@ -106,6 +106,12 @@ plot_grid(plotlist = lapply(1:40, function(i) {
 }), align = "hv", ncol = 5, scale = 0.95)
 
 # ggsave("figures/UKBB-loadings1-40.pdf", width = 15, height = 15)
+
+# Long-range LD region of PC19
+load_PC19 <- loadings$PC9_loading.1
+ind_large <- which(abs(load_PC19) > 0.01)
+plot(ind_large, load_PC19[ind_large], pch = 20)
+snp_qc[ind_large, c("chromosome", "position")] # chr6 - [70-91]
 
 nPC <- 20
 PC <- fread2(
