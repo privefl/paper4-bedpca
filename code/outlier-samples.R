@@ -18,21 +18,22 @@ ggplot() +
 
 # ggsave("figures/hist-outliers-1000G.pdf", width = 9, height = 6)
 
-plot_grid(plotlist = lapply(7:10, function(k) {
+source("code/plot_grid2.R")
+plot_grid2(plotlist = lapply(7:10, function(k) {
   plot(obj.svd, type = "scores", scores = 2 * k - 1:0, coeff = 0.6) +
     aes(color = S) +
     scale_colour_viridis_c()
 }), scale = 0.95)
 
-# ggsave("figures/outliers-1000G.pdf", width = 7, height = 5)
+# ggsave("figures/outliers-1000G.pdf", width = 6, height = 5)
 
-plot_grid(plotlist = lapply(7:10, function(k) {
+plot_grid2(plotlist = lapply(7:10, function(k) {
   plot(obj.svd, type = "scores", scores = 2 * k - 1:0, coeff = 0.6) +
     aes(color = S > 0.4) +
     scale_colour_viridis_d()
 }), scale = 0.95)
 
-# ggsave("figures/be-outlier-1000G.pdf", width = 7, height = 5)
+# ggsave("figures/be-outlier-1000G.pdf", width = 6, height = 5)
 
 library(magrittr)
 S2 <- apply(obj.svd$u, 2, function(x) abs(x - mean(x)) / sd(x)) %>%
@@ -47,18 +48,18 @@ ggplot() +
 
 # ggsave("figures/hist-outliers2-1000G.pdf", width = 9, height = 6)
 
-plot_grid(plotlist = lapply(7:10, function(k) {
+plot_grid2(plotlist = lapply(7:10, function(k) {
   plot(obj.svd, type = "scores", scores = 2 * k - 1:0, coeff = 0.6) +
     aes(color = S2) +
     scale_colour_viridis_c(trans = "log", breaks = c(1, 3, 6, 20))
 }), scale = 0.95)
 
-# ggsave("figures/outliers2-1000G.pdf", width = 7, height = 5)
+# ggsave("figures/outliers2-1000G.pdf", width = 6, height = 5)
 
-plot_grid(plotlist = lapply(7:10, function(k) {
+plot_grid2(plotlist = lapply(7:10, function(k) {
   plot(obj.svd, type = "scores", scores = 2 * k - 1:0, coeff = 0.6) +
     aes(color = S2 > 6) +
     scale_colour_viridis_d()
 }), scale = 0.95)
 
-# ggsave("figures/be-outlier2-1000G.pdf", width = 7, height = 5)
+# ggsave("figures/be-outlier2-1000G.pdf", width = 6, height = 5)
