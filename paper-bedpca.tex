@@ -271,10 +271,11 @@ A few points with higher values for this statistic S appear as outliers in PC17-
 \caption{Outlier detection in the 1000 Genomes (1000G) project, using \texttt{prob\_dist} (Section \ref{outlier-sample}).\label{fig:outlier-pd}}
 \end{figure}
 
-As for restricting to homogeneous samples, we compare the use of R package aberrant, which was used to report the homogeneous ``White British'' subset in UKBB, to the use of the robust Mahalanobis distance we propose here.
+As for restricting to homogeneous samples, we compare the use of the robust Mahalanobis distance we propose here to the use of R package aberrant, which was used to report the homogeneous ``White British'' subset in the UKBB \cite[]{bellenguez2011robust,bycroft2017genome}.
 We visually choose a threshold of 5 on the log-distance and show that this gives a similar subset of individuals than the ``White British'' subset reported by the UK Biobank (Figure \ref{fig:homogeneous}).
 Moreover, when using this threshold, only 3 out of 10,936 people of self-reported Asian ancestry (1 ``Chinese'' and 2 ``Indian'') are kept, and 1 ``African'' out of 7622 people with Black background is kept (Table \ref{tab:homogeneous}). 
 In contrast, 416,492 out of 431,090 ``British'' (96.6\%) and 12,620 out of 12,759 ``Irish'' (98.9\%) are kept.
+Results are very similar to the set of ``White British'' made using R package aberrant (Figure \ref{fig:homogeneous}).
 
 \subsection{Projecting onto the PCA space from a reference dataset}
 
@@ -400,7 +401,7 @@ However, other pitfalls might apply when using other types of data; for example,
 \section*{Software and code availability}
 
 All code used for this paper is available at \url{https://github.com/privefl/paper4-bedpca/tree/master/code}.
-Package bigsnpr can be installed from GitHub (see \url{https://github.com/privefl/bigsnpr}).
+R packages bigsnpr and bigutilsr can be installed from either CRAN or GitHub (see \url{https://github.com/privefl/bigsnpr}).
 A tutorial on the steps to perform PCA on 1000G data is available at \url{https://privefl.github.io/bigsnpr/articles/bedpca.html}. 
 
 \section*{Acknowledgements}

@@ -21,7 +21,7 @@ ind_na <- attr(PC, "na.action")
 pop_UKBB <- df0$pop[-ind_na]
 
 
-dist <- bigutilsr::covRob(PC, estim = "pairwiseGK")$dist
+dist <- bigutilsr::dist_ogk(PC)
 
 ggplot() +
   geom_histogram(aes(log(dist)), color = "#000000", fill = "#000000", alpha = 0.5) +
