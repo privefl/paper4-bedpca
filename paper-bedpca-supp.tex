@@ -12,7 +12,6 @@
 \usepackage{rotating}
 \usepackage{color}
 \usepackage{graphicx}
-\usepackage{subcaption}
 \usepackage{amsmath, amsthm, amssymb}
 \usepackage{setspace}
 \usepackage{lineno}
@@ -43,6 +42,10 @@
 \graphicspath{{figures/}}
 \DeclareMathOperator*{\argmin}{\arg\!\min}
 
+
+\usepackage{float}
+\usepackage[caption = false]{subfig}
+
 \let\tabbeg\tabular
 \let\tabend\endtabular
 \renewenvironment{tabular}{\begin{adjustbox}{max width=0.9\textwidth}\tabbeg}{\tabend\end{adjustbox}}
@@ -62,7 +65,7 @@
 
 \begin{document}
 
-\section*{Supplementary Materials}
+%\section*{Supplementary Materials}
 
 \renewcommand{\thefigure}{S\arabic{figure}}
 \setcounter{figure}{0}
@@ -83,6 +86,9 @@ As $U^T U = I$, we note that $(U \Delta)^T \widetilde{U} = \Delta V_2[1{:}K,~]$ 
 \item Apply the previous transformation to $\widetilde{u}$ to get the projection of $y$ in the reference PCA space (i.e.\ $\rho \widetilde{u} A$).
 \end{enumerate}
 
+\bibliographystyle{natbib}
+\bibliography{refs.bib}
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -91,22 +97,11 @@ As $U^T U = I$, we note that $(U \Delta)^T \widetilde{U} = \Delta V_2[1{:}K,~]$ 
 \subsection*{Sample outlier detection}
 
 \begin{figure}[htbp]
-\centering
-\begin{subfigure}[b]{0.55\textwidth}
-\includegraphics[width=\textwidth]{hist-outliers2-1000G.pdf}
-\caption{Distribution of statistics (S2) and default threshold (6, in red)}
-\end{subfigure}
-\\~\\
-\begin{subfigure}[b]{0.45\textwidth}
-\includegraphics[width=\textwidth]{outliers2-1000G.pdf}
-\caption{Principal Component (PC) scores 13 to 20 of 1000G, colored by statistic used to detect outliers (maximum number of SDs from the mean, log-scale).}
-\end{subfigure}
-~~~~~~
-\begin{subfigure}[b]{0.45\textwidth}
-\includegraphics[width=\textwidth]{be-outlier2-1000G.pdf}
-\caption{Principal Component (PC) scores 13 to 20 of 1000G, colored by being detected as an outlier.\\}
-\end{subfigure}
-\caption{Outlier detection in the 1000 Genomes (1000G) project, using the rule ``6 SDs from the mean'', i.e.\ where S2 is the maximum (for all PCs) number of SDs from the mean (Section \ref{outlier-sample}).\label{fig:outlier-sd}}
+	\centering
+	\subfloat[Distribution of statistics (S2) and default threshold (6, in red)]{\includegraphics[width=0.55\textwidth]{hist-outliers2-1000G.pdf}} \\~\\
+	\subfloat[Principal Component (PC) scores 13 to 20 of 1000G, colored by statistic used to detect outliers (maximum number of SDs from the mean, log-scale).]{\includegraphics[width=0.45\textwidth]{outliers2-1000G.pdf}} $~~~~~~$
+	\subfloat[Principal Component (PC) scores 13 to 20 of 1000G, colored by being detected as an outlier.\\]{\includegraphics[width=0.45\textwidth]{be-outlier2-1000G.pdf}}
+	\caption{Outlier detection in the 1000 Genomes (1000G) project, using the rule ``6 SDs from the mean'', i.e.\ where S2 is the maximum (for all PCs) number of SDs from the mean (Section 2.4).\label{fig:outlier-sd}}
 \end{figure}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -114,27 +109,12 @@ As $U^T U = I$, we note that $(U \Delta)^T \widetilde{U} = \Delta V_2[1{:}K,~]$ 
 \clearpage
 
 \begin{figure}[htbp]
-\centering
-\begin{subfigure}[b]{0.45\textwidth}
-\includegraphics[width=\textwidth]{UKBB-White-British.png}
-\caption{PCs 1 to 20 of UKBB, colored by whether it is in the group of ``White British'' reported by the UKBB (blue).}
-\end{subfigure}
-~~~~~~
-\begin{subfigure}[b]{0.5\textwidth}
-\includegraphics[width=\textwidth]{UKBB-Maha-dist.png}
-\caption{PCs 1 to 20 of UKBB, colored by robust Mahalanobis distances computed on PCs (log-scale).\\}
-\end{subfigure}
-\\~\\
-\begin{subfigure}[b]{0.45\textwidth}
-\includegraphics[width=\textwidth]{hist-Maha-dist.pdf}
-\caption{Distribution of (log squared) distances.\\~\\~\\~\\~\\}
-\end{subfigure}
-~~~~~~
-\begin{subfigure}[b]{0.45\textwidth}
-\includegraphics[width=\textwidth]{UKBB-Maha-outlier.png}
-\caption{PCs 1 to 20 of UKBB, colored by being detected as an outlier. Threshold of being considered as an outlier is determined based on histogram (c), where the threshold of 5 is chosen for the logarithm of the distances.}
-\end{subfigure}
-\caption{Homogeneous sample detection in the UK Biobank (UKBB), using robust Mahalanobis distances computed on the first 20 Principal Component scores (PCs) of UKBB.).\label{fig:homogeneous}}
+	\centering
+	\subfloat[PCs 1 to 20 of UKBB, colored by whether it is in the group of ``White British'' reported by the UKBB (blue).]{\includegraphics[width=0.45\textwidth]{UKBB-White-British.png}} $~~~~~~$
+	\subfloat[PCs 1 to 20 of UKBB, colored by robust Mahalanobis distances computed on PCs (log-scale).\\]{\includegraphics[width=0.45\textwidth]{UKBB-Maha-dist.png}} \\~\\
+	\subfloat[Distribution of (log squared) distances.\\~\\~\\~\\~\\).]{\includegraphics[width=0.45\textwidth]{hist-Maha-dist.pdf}} $~~~~~~$
+	\subfloat[PCs 1 to 20 of UKBB, colored by being detected as an outlier. Threshold of being considered as an outlier is determined based on histogram (c), where the threshold of 5 is chosen for the logarithm of the distances.]{\includegraphics[width=0.45\textwidth]{UKBB-Maha-outlier.png}}
+	\caption{Homogeneous sample detection in the UK Biobank (UKBB), using robust Mahalanobis distances computed on the first 20 Principal Component scores (PCs) of UKBB.).\label{fig:homogeneous}}
 \end{figure}
 
 % latex table generated in R 3.6.0 by xtable 1.8-4 package

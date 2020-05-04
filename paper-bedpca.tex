@@ -1,51 +1,57 @@
-%% LyX 1.3 created this file.  For more info, see http://www.lyx.org/.
-%% Do not edit unless you really know what you are doing.
-\documentclass[english, 12pt]{article}
-\usepackage{times}
+\documentclass{bioinfo}
+\copyrightyear{2015} \pubyear{2015}
+
+\access{Advance Access Publication Date: Day Month Year}
+\appnotes{Manuscript Category}
+
+%\usepackage{times}
 %\usepackage{algorithm2e}
-\usepackage{url}
-\usepackage{bbm}
-\usepackage[T1]{fontenc}
-\usepackage[latin1]{inputenc}
-\usepackage{geometry}
-\geometry{verbose,letterpaper,tmargin=2cm,bmargin=2cm,lmargin=1.5cm,rmargin=1.5cm}
-\usepackage{rotating}
-\usepackage{color}
-\usepackage{graphicx}
-\usepackage{subcaption}
-\usepackage{amsmath, amsthm, amssymb}
-\usepackage{setspace}
-\usepackage{lineno}
+%\usepackage{url}
+%\usepackage{bbm}
+%\usepackage[T1]{fontenc}
+%\usepackage[latin1]{inputenc}
+%\usepackage{geometry}
+%\geometry{verbose,letterpaper,tmargin=2cm,bmargin=2cm,lmargin=1.5cm,rmargin=1.5cm}
+%\usepackage{rotating}
+%\usepackage{color}
+%\usepackage{graphicx}
+%\usepackage{amsmath, amsthm, amssymb}
+%\usepackage{setspace}
+%\usepackage{lineno}
 \usepackage{hyperref}
-\usepackage{bbm}
-\usepackage{makecell}
 
 %\renewcommand{\arraystretch}{1.8}
 
-\usepackage{xr}
-\externaldocument{paper-bedpca-supp}
+%\usepackage{xr}
+%\externaldocument{paper-bedpca-supp}
 
 %\linenumbers
 %\doublespacing
-\onehalfspacing
+%\onehalfspacing
 %\usepackage[authoryear]{natbib}
-\usepackage{natbib} \bibpunct{(}{)}{;}{author-year}{}{,}
+%\usepackage{natbib} \bibpunct{(}{)}{;}{author-year}{}{,}
 
 %Pour les rajouts
-\usepackage{color}
-\definecolor{trustcolor}{rgb}{0,0,1}
+%\usepackage{color}
+%\definecolor{trustcolor}{rgb}{0,0,1}
 
-\usepackage{dsfont}
-\usepackage[warn]{textcomp}
+%\usepackage{dsfont}
+%\usepackage[warn]{textcomp}
 \usepackage{adjustbox}
+\usepackage{makecell}
 \usepackage{multirow}
-\usepackage{graphicx}
-\graphicspath{{figures/}}
-\DeclareMathOperator*{\argmin}{\arg\!\min}
+%\usepackage{graphicx}
+%\graphicspath{{figures/}}
+%\DeclareMathOperator*{\argmin}{\arg\!\min}
 
 \let\tabbeg\tabular
 \let\tabend\endtabular
-\renewenvironment{tabular}{\begin{adjustbox}{max width=0.9\textwidth}\tabbeg}{\tabend\end{adjustbox}}
+\renewenvironment{tabular}{\begin{adjustbox}{max width=0.95\linewidth}\tabbeg}{\tabend\end{adjustbox}}
+
+\usepackage{float}
+\usepackage[caption = false]{subfig}
+
+\usepackage{natbib}
 
 \makeatletter
 
@@ -54,48 +60,51 @@
 %\newcommand{\boldsymbol}[1]{\mbox{\boldmath $#1$}}
 
 %% Because html converters don't know tabularnewline
-\providecommand{\tabularnewline}{\\}
+%\providecommand{\tabularnewline}{\\}
+%\providecommand{\@LN}[2]{}
 
-\usepackage{babel}
+%\usepackage{babel}
 \makeatother
 
 
 \begin{document}
+	
+\firstpage{1}
 
+\subtitle{Subject Section}
 
-\title{Efficient toolkit implementing best practices for principal component analysis of population genetic data}
-\author{Florian Priv\'e,$^{\text{1,5,}*}$ Keurcien Luu$^{\text{5}}$, Michael G.B. Blum,$^{\text{4,5}}$ John J. McGrath,$^{\text{1,2,3}}$ and Bjarni J. Vilhj\'almsson$^{\text{1,}*}$}
+\title[Efficient PCA Toolkit for Genetic Data]{Efficient toolkit implementing best practices for principal component analysis of population genetic data}
 
-\date{~ }
+\author[Priv\'e \textit{et~al}.]{Florian Priv\'e,$^{\text{1,5,}*}$ Keurcien Luu,$^{\text{5}}$ Michael G.B. Blum,$^{\text{4,5}}$ John J. McGrath,$^{\text{1,2,3}}$ and Bjarni J. Vilhj\'almsson$^{\text{1,}*}$}
+
+\address{$^{\text{\sf 1}}$National Centre for Register-Based Research, Aarhus University, Aarhus, 8210, Denmark. \\
+$^{\text{\sf 2}}$Queensland Brain Institute, University of Queensland, St. Lucia, 4072, Queensland, Australia. \\
+$^{\text{\sf 3}}$Queensland Centre for Mental Health Research, The Park Centre for Mental Health, Wacol, 4076, Queensland, Australia. \\
+$^{\text{\sf 4}}$OWKIN France, Paris, 75010, France. \\
+$^{\text{\sf 5}}$Laboratoire TIMC-IMAG, UMR 5525, Univ.\ Grenoble Alpes, La Tronche, 38700, France.}
+
+\corresp{$^\ast$To whom correspondence should be addressed.}
+
+\history{Received on XXXXX; revised on XXXXX; accepted on XXXXX}
+
+\editor{Associate Editor: XXXXXXX}
+
+\abstract{\textbf{Motivation:} Principal Component Analysis (PCA) of genetic data is routinely used to infer ancestry and control for population structure in various genetic analyses. However, conducting PCA analyses can be complicated and has several potential pitfalls. These pitfalls include (1) capturing Linkage Disequilibrium (LD) structure instead of population structure, (2) projected PCs that suffer from shrinkage bias, (3) detecting sample outliers, and (4) uneven population sizes. In this work, we explore these potential issues when using PCA, and present efficient solutions to these. Following applications to the UK Biobank and the 1000 Genomes project datasets, we make recommendations for best practices and provide efficient and user-friendly implementations of the proposed solutions in R packages bigsnpr and bigutilsr. \\
+\textbf{Results:} For example, we find that PC19 to PC40 in the UK Biobank capture complex LD structure rather than population structure. Using our automatic algorithm for removing long-range LD regions, we recover 16 PCs that capture population structure only. Therefore, we recommend using only 16-18 PCs from the UK Biobank to account for population structure confounding. We also show how to use PCA to restrict analyses to individuals of homogeneous ancestry.  Finally, when projecting individual genotypes onto the PCA computed from the 1000 Genomes project data, we find a shrinkage bias that becomes large for PC5 and beyond. We then demonstrate how to obtain unbiased projections efficiently using bigsnpr. \\
+\textbf{Conclusion:} Overall, we believe this work would be of interest for anyone using PCA in their analyses of genetic data, as well as for other omics data. \\
+\textbf{Availability:} R packages bigsnpr and bigutilsr can be installed from either CRAN or GitHub (see \url{https://github.com/privefl/bigsnpr}).
+A tutorial on the steps to perform PCA on 1000G data is available at \url{https://privefl.github.io/bigsnpr/articles/bedpca.html}.
+All code used for this paper is available at \url{https://github.com/privefl/paper4-bedpca/tree/master/code}.\\
+\textbf{Contact:} \href{florian.prive.21@gmail.com}{florian.prive.21@gmail.com} \& \href{bjv@econ.au.dk}{bjv@econ.au.dk}\\
+\textbf{Supplementary information:} Supplementary data are available at \textit{Bioinformatics}
+online.}
+
 \maketitle
-
-\noindent$^{\text{\sf 1}}$National Centre for Register-Based Research, Aarhus University, Aarhus, 8210, Denmark. \\
-\noindent$^{\text{\sf 2}}$Queensland Brain Institute, University of Queensland, St. Lucia, 4072, Queensland, Australia. \\
-\noindent$^{\text{\sf 3}}$Queensland Centre for Mental Health Research, The Park Centre for Mental Health, Wacol, 4076, Queensland, Australia. \\
-\noindent$^{\text{\sf 4}}$OWKIN France, Paris, 75010, France. \\
-\noindent$^{\text{\sf 5}}$Laboratoire TIMC-IMAG, UMR 5525, Univ.\ Grenoble Alpes, La Tronche, 38700, France. \\
-\noindent$^\ast$To whom correspondence should be addressed.\\
-
-\noindent Contacts:
-\begin{itemize}
-\item \url{florian.prive.21@gmail.com}
-\item \url{bjv@econ.au.dk}
-\end{itemize}
-
-\clearpage
-
-\abstract{	
-Principal Component Analysis (PCA) of genetic data is routinely used to infer ancestry and control for population structure in various genetic analyses. However, conducting PCA analyses can be complicated and has several potential pitfalls. These pitfalls include (1) capturing Linkage Disequilibrium (LD) structure instead of population structure, (2) projected PCs that suffer from shrinkage bias, (3) detecting sample outliers, and (4) uneven population sizes. In this work, we explore these potential issues when using PCA, and present efficient solutions to these. Following applications to the UK Biobank and the 1000 Genomes project datasets, we make recommendations for best practices and provide efficient and user-friendly implementations of the proposed solutions in R packages bigsnpr and bigutilsr.
-
-For example, we find that PC19 to PC40 in the UK Biobank capture complex LD structure rather than population structure. Using our automatic algorithm for removing long-range LD regions, we recover 16 PCs that capture population structure only. Therefore, we recommend using only 16-18 PCs from the UK Biobank to account for population structure confounding. We also show how to use PCA to restrict analyses to individuals of homogeneous ancestry.  Finally, when projecting individual genotypes onto the PCA computed from the 1000 Genomes project data, we find a shrinkage bias that becomes large for PC5 and beyond. We then demonstrate how to obtain unbiased projections efficiently using bigsnpr. 
-
-Overall, we believe this work would be of interest for anyone using PCA in their analyses of genetic data, as well as for other omics data.
-}
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\clearpage
+%\clearpage
 
 \section{Introduction}
 
@@ -115,6 +124,8 @@ Third, PC scores may capture outliers that are due to family structure, populati
 Finally, efficient methods for PCA use approximations, which can results in some lack of precision of computed PCs. This potential issue has been demonstrated for software such as FastPCA and PLINK 2.0, but not for FlashPCA2 and bigstatsr/bigsnpr \cite[]{abraham2017flashpca2,prive2017efficient}.
 An overview of existing methods with their respective advantages and limitations is presented in table \ref{tab:method-overview}.
 
+\section{Approach}
+
 For this paper, we derive implementations of truncated PCA and other useful functions for e.g.\ performing LD thinning and computing various statistics. We make these available in a new release of R package bigsnpr (v1.0.0); what differs from previously available functions presented in \cite{prive2017efficient} is that these new functions can be used directly on PLINK bed/bim/fam files with some missing values. 
 We use these new functions to analyse the UK Biobank data, and show that these functions are both very fast and easy to use. We also point out that many PCs currently reported by the UK Biobank capture LD structure instead of population structure. 
 Interestingly, subsetting the UK Biobank data enables to get more PCs that capture population structure than when using the whole sample (\textasciitilde40 instead of \textasciitilde16).
@@ -123,11 +134,12 @@ Finally, we explore options to detect outlier samples in PCA, either a few outli
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\section{Material and Methods}
+\begin{methods}
+\section{Methods}
 
 \begingroup
 \renewcommand*{\arraystretch}{2}
-\begin{table}[h]
+\begin{table*}[htb]
 \centering
 \caption{Overview of existing methods.} 
 \label{tab:method-overview}
@@ -149,7 +161,7 @@ Analysis & Method and/or Software & Citation & Advantages & Current limitations 
   & Online ADP (OADP) in python package FRAPOSA & \cite[]{zhang2019fast} & Much faster than ADP & Does not work for related individuals (Section \ref{proj-related}) \\ 
 \hline
 \end{tabular}
-\end{table}
+\end{table*}
 \endgroup
 
 \subsection{Efficient implementation of PCA for genotype data \label{randomSVD}}
@@ -220,6 +232,9 @@ We apply some quality control filters; we remove individuals with more than 10\%
 This results in 488,371 individuals and 504,139 variants.
 When removing related individuals, we use the list of individual pairs reported by the UK Biobank.
 
+
+\end{methods}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Results}
@@ -231,17 +246,17 @@ It takes 22 minutes to perform a first phase of clumping on 406,545 unrelated in
 When performing the automatic procedure for LD detection, it takes 5 hours to perform the initial clumping step, 6 rounds of computation of PCs and 5 rounds of outlier variant detection (i.e.\ 5 iterations of outlier detection and one final computation of PCs).
 
 When applying our automatic procedure to remove long-range LD regions, it does not converge after 5 iterations for the UK Biobank, i.e.\ it keeps detecting long-range LD regions at each iteration (represented by peaks in PC loadings).
-Therefore, we are able to capture only 16 PCs that show stratification that is not LD structure (Figures \ref{fig:UKBB-screeplot}, \ref{fig:UKBB-scores} and \ref{fig:UKBB-loadings}).
+Therefore, we are able to capture only 16 PCs that show stratification that is not LD structure (Figures S8, S9 and S10).
 Similarly, PC loadings reported by the UK Biobank clearly show that PC19 to PC40 capture LD structure, which is also the case for PC16 and PC18, although less pronounced (see peaks in figure \ref{fig:UKBB-loadings40}). 
-These include e.g.\ one region on chromosome 6 (70-91 Mbp) that is captured in PC19 (Figure \ref{fig:UKBB-loadings}) and that was not previously reported in \cite{price2008long}.
+These include e.g.\ one region on chromosome 6 (70-91 Mbp) that is captured in PC19 (Figure S10) and that was not previously reported in \cite{price2008long}.
 
-\begin{figure}[!htpb]
-\centerline{\includegraphics[width=0.9\textwidth]{UKBB-loadings1-40.pdf}}
+\begin{figure*}[htb]
+\centerline{\includegraphics[width=0.8\textwidth]{UKBB-loadings1-40.pdf}}
 \caption{Principal Component (PC) loadings 1 to 40 reported by the UK Biobank.
 Column indices of variants in the data, ordered by chromosome and physical position, are represented on the x-axis, and the value of loadings are represented on the y-axis.
 Points are hex-binned.
 \label{fig:UKBB-loadings40}}
-\end{figure}
+\end{figure*}
 
 As for other analyses, it takes 8 minutes to match the 1000G data to the UKBB data and compute 20 PCs of the 1000G data using the automatic LD detection technique. It takes 12 minutes more to perform the OADP projection of all 488,371 UKBB individuals onto the PCA space computed using the 1000G data.
 Finally, it takes only 6 minutes to compute the 30-Nearest Neighbours of 20 PC scores for 406,545 UK Biobank individuals, which is the most computationally demanding step when computing the statistics used to detect individual outlier samples (Section \ref{outlier-sample}).
@@ -251,47 +266,35 @@ Finally, it takes only 6 minutes to compute the 30-Nearest Neighbours of 20 PC s
 To detect a few outlier samples, we compare the standard rule of ``6 SDs from the mean'' (6SD) used in e.g.\ EIGENSOFT to the statistic we propose in section \ref{outlier-sample}.
 Our statistic identifies only isolated samples or isolated pairs that seems to be outliers driving structure of PC17-20 of 1000G (Figure \ref{fig:outlier-pd}). 
 All but one outlier are distantly-related pairs that disappear if using a more stringent threshold on relatedness (i.e.\ using a KING-relatedness cutoff of \textasciitilde0.0442 instead of \textasciitilde0.0884, see tutorial in section ``code availability''). 
-In contrast, rule 6SD identifies a lot of outliers, of which some are part of a relatively large cluster (Figure \ref{fig:outlier-sd}).
+In contrast, rule 6SD identifies a lot of outliers, of which some are part of a relatively large cluster (Figure S1).
 We recall that, if all PCs are normally distributed, after correcting for multiple testing of 2500 individuals and 20 PCs, the probability of detecting one outlier or more using 6SD is only of 0.0001.
 
-\begin{figure}[htbp]
-\centering
-\begin{subfigure}[b]{0.55\textwidth}
-\includegraphics[width=\textwidth]{hist-outliers-1000G.pdf}
-\caption{Distribution of statistics (S).}
-\end{subfigure}
-\\~\\
-\begin{subfigure}[b]{0.45\textwidth}
-\includegraphics[width=\textwidth]{outliers-1000G.pdf}
-\caption{Principal Component (PC) scores 13 to 20 of 1000G, colored by the statistic (S) used to define outliers.
-A few points with higher values for this statistic S appear as outliers in PC17-20.}
-\end{subfigure}
-~~~~~~
-\begin{subfigure}[b]{0.45\textwidth}
-\includegraphics[width=\textwidth]{be-outlier-1000G.pdf}
-\caption{Principal Component (PC) scores 13 to 20 of 1000G, colored by being detected as an outlier. Threshold of being an outlier is determined based on histogram (a).}
-\end{subfigure}
-\caption{Outlier detection in the 1000 Genomes (1000G) project, using \texttt{prob\_dist} (Section \ref{outlier-sample}).\label{fig:outlier-pd}}
-\end{figure}
+\begin{figure*}[htb]
+	\centering
+	\subfloat[Distribution of statistics (S).]{\includegraphics[width=0.35\linewidth]{hist-outliers-1000G.pdf}} $~~~$
+	\subfloat[Principal Component (PC) scores 13 to 20 of 1000G, colored by the statistic (S) used to define outliers. A few points with higher values for this statistic S appear as outliers in PC17-20.]{\includegraphics[width=0.3\linewidth]{outliers-1000G.pdf}} $~~~~~$
+	\subfloat[Principal Component (PC) scores 13 to 20 of 1000G, colored by being detected as an outlier. Threshold of being an outlier is determined based on histogram (a).]{\includegraphics[width=0.3\linewidth]{be-outlier-1000G.pdf}}
+	\caption{Outlier detection in the 1000 Genomes (1000G) project, using \texttt{prob\_dist} (Section \ref{outlier-sample}).\label{fig:outlier-pd}}
+\end{figure*}
 
 As for restricting to homogeneous samples, we compare the use of the robust Mahalanobis distance we propose here to the use of R package aberrant, which was used to report the homogeneous ``White British'' subset in the UKBB \cite[]{bellenguez2011robust,bycroft2017genome}.
-We visually choose a threshold of 5 on the log-distance and show that this gives a similar subset of individuals than the ``White British'' subset reported by the UK Biobank (Figure \ref{fig:homogeneous}).
-Moreover, when using this threshold, only 3 out of 10,936 people of self-reported Asian ancestry (1 ``Chinese'' and 2 ``Indian'') are kept, and 1 ``African'' out of 7622 people with Black background is kept (Table \ref{tab:homogeneous}). 
+We visually choose a threshold of 5 on the log-distance and show that this gives a similar subset of individuals than the ``White British'' subset reported by the UK Biobank (Figure S2).
+Moreover, when using this threshold, only 3 out of 10,936 people of self-reported Asian ancestry (1 ``Chinese'' and 2 ``Indian'') are kept, and 1 ``African'' out of 7622 people with Black background is kept (Table S1). 
 In contrast, 416,492 out of 431,090 ``British'' (96.6\%) and 12,620 out of 12,759 ``Irish'' (98.9\%) are kept.
-Results are very similar to the set of ``White British'' made using R package aberrant (Figure \ref{fig:homogeneous}).
+Results are very similar to the set of ``White British'' made using R package aberrant (Figure S2).
 
 \subsection{Projecting onto the PCA space from a reference dataset}
 
 We use 60\% of individuals in the 1000G data (section \ref{1000G}) to compute K=20 PCs. Then, we project the remaining 40\% individuals using three methods: 1/ simply multiplying the genotypes of these individuals by the previously computed loadings; 2/ correcting the simple projections using asymptotic shrinkage factors as determined by R package hdpca v1.1.3 \cite[]{dey2019asymptotic}, with all eigenvalues derived from the Genetic Relationship Matrix (GRM) computed with \texttt{bed\_tcrossprodSelf}, one of the new functions of R package bigsnpr; and 3/ the OADP projection (section \ref{proj}). 
 When simply projecting using loadings, there is negligible shrinkage for PC1 and PC2, a small shrinkage for PC3 and PC4, and a large shrinkage for PC5 to PC8 (Figure \ref{fig:proj1000G}).
 In contrast, there is no visible shrinkage when projecting new individuals with OADP (Figure \ref{fig:proj1000G}).
-Simple projection is affected even more by this shrinkage for PC9 to PC20, while OADP still appears free of this bias (Figure \ref{fig:proj1000G-2}).
-We show the same results when projecting the full UK Biobank data onto PCA computed using 1000G data  (Figure \ref{fig:proj1000G-5}).
-When correcting projected PC scores with asymptotic shrinkage factors, bias is smaller than with simple projection, yet, there is a visible bias for PC7-8 (Figure \ref{fig:proj1000G-3}).
-Finally, to assess if OADP could be used to project individuals that are related to some individuals that were used to compute PCA, we projected these 60\% individuals (as if we were projecting their monozygotic twins) using OADP. Projections of related individuals using OADP suffers from some bias in reverse direction (Figure \ref{fig:proj1000G-4}).
+Simple projection is affected even more by this shrinkage for PC9 to PC20, while OADP still appears free of this bias (Figure S3).
+We show the same results when projecting the full UK Biobank data onto PCA computed using 1000G data  (Figure S6).
+When correcting projected PC scores with asymptotic shrinkage factors, bias is smaller than with simple projection, yet, there is a visible bias for PC7-8 (Figure S4).
+Finally, to assess if OADP could be used to project individuals that are related to some individuals that were used to compute PCA, we projected these 60\% individuals (as if we were projecting their monozygotic twins) using OADP. Projections of related individuals using OADP suffers from some bias in reverse direction (Figure S5).
 \label{proj-related}
 
-\begin{figure}[!htpb]
+\begin{figure*}[htb]
 \centerline{\includegraphics[width=0.8\textwidth]{proj1000G-PC1-8.pdf}}
 \caption{Principal Component (PC) scores 1 to 8 of the 1000 Genomes project.
 Black points are the 60\% individuals used for computing PCA.
@@ -299,13 +302,13 @@ Red points are the 40\% remaining individuals, projected by simply multiplying t
 Blue points are the 40\% remaining individuals, projected using the Online Augmentation, Decomposition, and Procrustes (OADP) transformation.
 Estimated shrinkage coefficients for these 8 PCs are 1.01 (PC1), 1.02, 1.06, 1.09, 1.50 (PC5), 1.69, 1.98 and 1.39.
 \label{fig:proj1000G}}
-\end{figure}
+\end{figure*}
 
-When computing the PCs on the UK Biobank using 406,545 unrelated individuals and 171,977 variants, and projecting the 1000G data onto this reference PCA space, shrinkage is much smaller ($\leq 1.08$ for all 20 first PCs, Figure \ref{fig:proj1000G-6}). Overall, this shrinkage for simple projection decreases with an increased sample size (Table \ref{tab:shrinkage}).
+When computing the PCs on the UK Biobank using 406,545 unrelated individuals and 171,977 variants, and projecting the 1000G data onto this reference PCA space, shrinkage is much smaller ($\leq 1.08$ for all 20 first PCs, Figure S7). Overall, this shrinkage for simple projection decreases with an increased sample size (Table \ref{tab:shrinkage}).
 
 \begingroup
 \renewcommand*{\arraystretch}{1.8}
-\begin{table}[h]
+\begin{table}[htb]
 \centering
 \caption{Shrinkage coefficients when projecting new individuals onto reference PCA space. We list the dataset, the sample size and number of variants used to compute the final PCA. As expected, the shrinkage bias only becomes negligible if the PCA is conducted on large samples.} 
 \label{tab:shrinkage}
@@ -328,31 +331,31 @@ UKBB & 406.5 & 172 & 1.00 - 1.01 - 1.04 - 1.08 \\
 We recomputed PCA in the UK Biobank after restricting the individuals included in the computations: we randomly subsampled UKBB data to use only 10,000 British individuals (out of 431,029) and 5000 Irish individuals (out of 12,755), while keeping all individuals with other or unknown self-reported ancestry. 
 We further removed all pairs of related individuals reported by the UKBB (i.e.\ both individuals in each pair). 
 This resulted in 48,942 individuals that we used to compute 50 PCs, which took less than 3 hours using function \texttt{bed\_autoSVD} (that converged after 4 iterations of automatic LD removal). 
-We show that we are able to capture more PCs (at least 40 instead of 16-18) that display visual population structure (Figures \ref{fig:UKBB-scores2} and \ref{fig:UKBB-screeplot2}).
-We then projected all 439,429 remaining individuals from UKBB onto this PCA space in 21 minutes only using our implementation of the OADP projection (function \texttt{bed\_projectSelfPCA}). Note that these individuals should not be related to any of the 48,942 individuals used for training PCA because we removed both individuals from each pair of related individuals in the UKBB. Projection of new individuals show again a clear shrinkage when using simple projection (between 1.00 for PC1 and 1.80 for PC50), but no visible bias when using OADP projection (Figure \ref{fig:projUKBB-related}).
+We show that we are able to capture more PCs (at least 40 instead of 16-18) that display visual population structure (Figures \ref{fig:UKBB-scores2} and S12).
+We then projected all 439,429 remaining individuals from UKBB onto this PCA space in 21 minutes only using our implementation of the OADP projection (function \texttt{bed\_projectSelfPCA}). Note that these individuals should not be related to any of the 48,942 individuals used for training PCA because we removed both individuals from each pair of related individuals in the UKBB. Projection of new individuals show again a clear shrinkage when using simple projection (between 1.00 for PC1 and 1.80 for PC50), but no visible bias when using OADP projection (Figure S13).
 
-\begin{figure}[!htpb]
-\centerline{\includegraphics[width=0.9\textwidth]{UKBB-scores-restricted.png}}
+\begin{figure*}[htb]
+\centerline{\includegraphics[width=0.8\textwidth]{UKBB-scores-restricted.png}}
 \caption{Principal Component (PC) scores 27 to 50 computed on the UK Biobank using 48,942 individuals of diverse ancestries. These individuals are the ones resulting from removing all related individuals and randomly subsampling the British and Irish individuals. Different colors represent different self-reported ancestries.
 \label{fig:UKBB-scores2}}
-\end{figure}
+\end{figure*}
 
 \subsection{PCA \& missing value imputation}
 
 As we compute PCA on data with missing values, although we restrict to variants with less than 1\% missing values, we analyse hereinafter the effect of imputation of missing values before computing PCA.
 We compare 4 different imputation methods and two different sets of individuals.
 In the UK Biobank imputed data, approximately 1000 individuals have been removed because of a high number of missing values or a high heterozygosity, as compared to the genotyped data \cite[]{bycroft2017genome}.
-When computing PCA with mean imputation and using all genotyped individuals, PC16 captures individuals with very high heterozygosity (Figure \ref{fig:UKBB-het}). When restricting to imputed individuals only, i.e.\ after removing individuals with very high heterozygosity, PC16 completely disappears and new PC16 to PC19 correspond to previous PC17 to PC20 (Table \ref{tab:pca-het}).
-When using dosage data instead of genotype data with mean imputation, PCA is globally unchanged (Table \ref{tab:pca-dosage}). 
-Overall, if we choose to use either one of the following 4 imputation methods: mean imputation, random imputation according to allele frequencies, using reported dosage data from BGEN files, or imputation of genotyped data based on machine learning using function \texttt{snp\_fastImpute} of R package bigsnpr \cite[]{prive2017efficient}, resulting PCs are always very similar (absolute correlation larger than 0.99 for the 20 computed PCs; results partially shown in tables \ref{tab:pca-het} and \ref{tab:pca-dosage}). 
+When computing PCA with mean imputation and using all genotyped individuals, PC16 captures individuals with very high heterozygosity (Figure S11). When restricting to imputed individuals only, i.e.\ after removing individuals with very high heterozygosity, PC16 completely disappears and new PC16 to PC19 correspond to previous PC17 to PC20 (Table S2).
+When using dosage data instead of genotype data with mean imputation, PCA is globally unchanged (Table S3). 
+Overall, if we choose to use either one of the following 4 imputation methods: mean imputation, random imputation according to allele frequencies, using reported dosage data from BGEN files, or imputation of genotyped data based on machine learning using function \texttt{snp\_fastImpute} of R package bigsnpr \cite[]{prive2017efficient}, resulting PCs are always very similar (absolute correlation larger than 0.99 for the 20 computed PCs; results partially shown in tables S2 and S3). 
 This justifies performing PCA with mean imputation directly on PLINK bed files with a few missing values; this has the advantage to be much faster than having to impute genotyped data using \texttt{snp\_fastImpute}, which took 4 days for 406,545 individuals and 240,444 variants, or based on external reference datasets.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \section{Discussion}
 
-\begin{figure}[!htpb]
-\centerline{\includegraphics[width=0.4\textwidth]{PCA-pipeline.pdf}}
+\begin{figure}[htb]
+\centerline{\includegraphics[width=0.8\linewidth]{PCA-pipeline.pdf}}
 \caption{Proposed pipeline for computing Principal Components (PCs) using R packages bigsnpr and bigutilsr.
 \label{fig:pipeline}}
 \end{figure}
@@ -365,7 +368,7 @@ As PCA is a useful tool on its own and does not require extensive imputed data, 
 
 We summarise our work into several recommendations for computing PCA, and propose the pipeline shown in figure \ref{fig:pipeline}. Note that we have not included standard steps such as initial quality control filters and post-analysis checks (e.g.\ visual inspection of different plots).
 This pipeline requires removing all related individuals, for which we provide an R wrapper to PLINK's implementation of KING robust kinship coefficients \cite[]{manichaikul2010robust,chang2015second}. 
-Note that one should remove both individuals in each pair of related individuals. This ensures that the projected individuals are not related to the ones used for computing PCA, since we showed that relatedness is a problem when using the OADP projection (Figure \ref{fig:proj1000G-4}).
+Note that one should remove both individuals in each pair of related individuals. This ensures that the projected individuals are not related to the ones used for computing PCA, since we showed that relatedness is a problem when using the OADP projection (Figure S5).
 After selecting a subset of individuals, we apply several steps of outlier detection, one for outlier variants that capture long-range LD variation (automatic), and one for detecting outlier samples (semi-automatic and visual).
 To make these steps more computationally efficient, we explored solutions for not recomputing PCA from scratch when removing a few samples or a few variants. Using educated guesses in R package PRIMME based on low-rank approximations of the updated PCA seemed to be a promising approach but did not reduce computation time by much, so we did not pursue this idea \cite[]{brand2003fast,wu2017primme}. 
 
@@ -373,10 +376,10 @@ Once PCA is done, one should check the PC scores (scores of each individual for 
 We differentiate PCs in 3 broad types: the ones capturing LD structure, the ones capturing population structure, and noise.
 We expect population structure to be evenly distributed along the genome so that loadings are normally distributed around 0 (with small effect sizes).
 In contrast, long-range LD structure is essentially capturing the variation inside one long-range LD region (so localised in the genome), so that we expect the loadings to be very large in that region only (one peak).
-Therefore, PCs capturing LD structure can be identified by looking for peaks in PC loadings (e.g.\ PC17-20 in figure \ref{fig:UKBB-loadings}). 
+Therefore, PCs capturing LD structure can be identified by looking for peaks in PC loadings (e.g.\ PC17-20 in figure S10). 
 To identify which PCs capture population structure, and which ones are probably just noise, one should also look at PC scores (colored by ancestry if possible).
 PCs with no visible population stratification, i.e.\ where all individuals are normally distributed around 0, can be considered as noise.   
-As in many applications, we believe a compromise between signal and noise should be preferred. Therefore, we recommend using only PCs that show structure (e.g.\ PC1-16 in figure \ref{fig:UKBB-scores}) and excluding PCs that do not seem to capture any population structure (e.g.\ PC17-20 in figure \ref{fig:UKBB-scores}).
+As in many applications, we believe a compromise between signal and noise should be preferred. Therefore, we recommend using only PCs that show structure (e.g.\ PC1-16 in figure S9) and excluding PCs that do not seem to capture any population structure (e.g.\ PC17-20 in figure S9).
 
 When analysing a dataset that is composed mainly of one population (e.g.\ British people in the UK Biobank), we found that it is useful to subset these individuals to reduce the imbalance between the different population sizes.
 Likewise, previous works have shown that uneven population sizes can distort PCs \cite[]{novembre2008interpreting,mcvean2009genealogical}. 
@@ -399,33 +402,340 @@ However, other pitfalls might apply when using other types of data; for example,
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%\clearpage
-\vspace*{5em}
+\section*{Funding}
 
-\section*{Software and code availability}
-
-All code used for this paper is available at \url{https://github.com/privefl/paper4-bedpca/tree/master/code}.
-R packages bigsnpr and bigutilsr can be installed from either CRAN or GitHub (see \url{https://github.com/privefl/bigsnpr}).
-A tutorial on the steps to perform PCA on 1000G data is available at \url{https://privefl.github.io/bigsnpr/articles/bedpca.html}. 
+F.P., J.M.\ and B.V.\ are supported by the Danish National Research Foundation (Niels Bohr Professorship to J.M.), and also acknowledge the Lundbeck Foundation Initiative for Integrative Psychiatric Research, iPSYCH (R248-2017-2003).
 
 \section*{Acknowledgements}
 
 Authors thank Rounak Dey and Seunggeun Lee for helpful discussions about PCA projection.
 This research has been conducted using the UK Biobank Resource under Application Number 25589.
 
-F.P., J.M.\ and B.V.\ are supported by the Danish National Research Foundation (Niels Bohr Professorship to J.M.), and also acknowledge the Lundbeck Foundation Initiative for Integrative Psychiatric Research, iPSYCH (R248-2017-2003).
+\vspace*{1em}
 
-\section*{Declaration of Interests}
-
-Michael Blum is now an employee of OWKIN France.
+\noindent\textit{Conflict of Interest}: Michael Blum is now an employee of OWKIN France.
 The other authors declare no competing interests.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\clearpage
+%\clearpage
 
-\bibliographystyle{natbib}
-\bibliography{refs}
+%\bibliographystyle{natbib}
+%\bibliography{refs}
+
+\begin{thebibliography}{}
+	
+	\bibitem[{1000 Genomes Project Consortium} {\em et~al.}(2015){1000 Genomes
+		Project Consortium} {\em et~al.}]{10002015global}
+	{1000 Genomes Project Consortium} {\em et~al.} (2015).
+	\newblock A global reference for human genetic variation.
+	\newblock {\em Nature\/}, {\bf 526}(7571), 68.
+	
+	\bibitem[Abdellaoui {\em et~al.}(2013)Abdellaoui, Hottenga, De~Knijff, Nivard,
+	Xiao, Scheet, Brooks, Ehli, Hu, Davies, {\em
+		et~al.}]{abdellaoui2013population}
+	Abdellaoui, A., Hottenga, J.-J., De~Knijff, P., Nivard, M.~G., Xiao, X.,
+	Scheet, P., Brooks, A., Ehli, E.~A., Hu, Y., Davies, G.~E., {\em et~al.}
+	(2013).
+	\newblock Population structure, migration, and diversifying selection in the
+	netherlands.
+	\newblock {\em European journal of human genetics\/}, {\bf 21}(11), 1277.
+	
+	\bibitem[Abraham {\em et~al.}(2017)Abraham, Qiu, and
+	Inouye]{abraham2017flashpca2}
+	Abraham, G., Qiu, Y., and Inouye, M. (2017).
+	\newblock {FlashPCA2}: principal component analysis of biobank-scale genotype
+	datasets.
+	\newblock {\em Bioinformatics\/}.
+	
+	\bibitem[Agrawal {\em et~al.}(2019)Agrawal, Chiu, Le, Halperin, and
+	Sankararaman]{agrawal2019scalable}
+	Agrawal, A., Chiu, A.~M., Le, M., Halperin, E., and Sankararaman, S. (2019).
+	\newblock Scalable probabilistic pca for large-scale genetic variation data.
+	\newblock {\em bioRxiv\/}, page 729202.
+	
+	\bibitem[Bellenguez {\em et~al.}(2011)Bellenguez, Strange, Freeman, {Wellcome
+		Trust Case Control Consortium}, Donnelly, and Spencer]{bellenguez2011robust}
+	Bellenguez, C., Strange, A., Freeman, C., {Wellcome Trust Case Control
+		Consortium}, Donnelly, P., and Spencer, C.~C. (2011).
+	\newblock A robust clustering algorithm for identifying problematic samples in
+	genome-wide association studies.
+	\newblock {\em Bioinformatics\/}, {\bf 28}(1), 134--135.
+	
+	\bibitem[Bose {\em et~al.}(2019)Bose, Kalantzis, Kontopoulou, Elkady, Paschou,
+	and Drineas]{bose2019terapca}
+	Bose, A., Kalantzis, V., Kontopoulou, E.-M., Elkady, M., Paschou, P., and
+	Drineas, P. (2019).
+	\newblock {TeraPCA}: a fast and scalable software package to study genetic
+	variation in tera-scale genotypes.
+	\newblock {\em Bioinformatics\/}.
+	
+	\bibitem[Brand(2003)Brand]{brand2003fast}
+	Brand, M. (2003).
+	\newblock Fast online svd revisions for lightweight recommender systems.
+	\newblock In {\em Proceedings of the 2003 {SIAM} international conference on
+		data mining\/}, pages 37--46. SIAM.
+	
+	\bibitem[Brys {\em et~al.}(2004)Brys, Hubert, and Struyf]{brys2004robust}
+	Brys, G., Hubert, M., and Struyf, A. (2004).
+	\newblock A robust measure of skewness.
+	\newblock {\em Journal of Computational and Graphical Statistics\/}, {\bf
+		13}(4), 996--1017.
+	
+	\bibitem[Bycroft {\em et~al.}(2018)Bycroft, Freeman, Petkova, Band, Elliott,
+	Sharp, Motyer, Vukcevic, Delaneau, O'Connell, {\em
+		et~al.}]{bycroft2017genome}
+	Bycroft, C., Freeman, C., Petkova, D., Band, G., Elliott, L.~T., Sharp, K.,
+	Motyer, A., Vukcevic, D., Delaneau, O., O'Connell, J., {\em et~al.} (2018).
+	\newblock The {UK} biobank resource with deep phenotyping and genomic data.
+	\newblock {\em Nature\/}, {\bf 562}(7726), 203.
+	
+	\bibitem[Chang {\em et~al.}(2015)Chang, Chow, Tellier, Vattikuti, Purcell, and
+	Lee]{chang2015second}
+	Chang, C.~C., Chow, C.~C., Tellier, L.~C., Vattikuti, S., Purcell, S.~M., and
+	Lee, J.~J. (2015).
+	\newblock Second-generation {PLINK}: rising to the challenge of larger and
+	richer datasets.
+	\newblock {\em Gigascience\/}, {\bf 4}(1), 7.
+	
+	\bibitem[Decamps {\em et~al.}(2020)Decamps, Priv{\'e}, Bacher, Jost, Waguet,
+	Houseman, Lurie, Lutsik, Milosavljevic, Scherer, {\em
+		et~al.}]{decamps2019guidelines}
+	Decamps, C., Priv{\'e}, F., Bacher, R., Jost, D., Waguet, A., Houseman, E.~A.,
+	Lurie, E., Lutsik, P., Milosavljevic, A., Scherer, M., {\em et~al.} (2020).
+	\newblock Guidelines for cell-type heterogeneity quantification based on a
+	comparative analysis of reference-free dna methylation deconvolution
+	software.
+	\newblock {\em BMC bioinformatics\/}, {\bf 21}(1), 16.
+	
+	\bibitem[Dey and Lee(2019)Dey and Lee]{dey2019asymptotic}
+	Dey, R. and Lee, S. (2019).
+	\newblock Asymptotic properties of principal component analysis and
+	shrinkage-bias adjustment under the generalized spiked population model.
+	\newblock {\em Journal of Multivariate Analysis\/}, {\bf 173}, 145--164.
+	
+	\bibitem[Elseberg {\em et~al.}(2012)Elseberg, Magnenat, Siegwart, and
+	N{\"u}chter]{elseberg2012comparison}
+	Elseberg, J., Magnenat, S., Siegwart, R., and N{\"u}chter, A. (2012).
+	\newblock Comparison of nearest-neighbor-search strategies and implementations
+	for efficient shape registration.
+	\newblock {\em Journal of Software Engineering for Robotics\/}, {\bf 3}(1),
+	2--12.
+	
+	\bibitem[Galinsky {\em et~al.}(2016)Galinsky, Bhatia, Loh, Georgiev, Mukherjee,
+	Patterson, and Price]{galinsky2016fast}
+	Galinsky, K.~J., Bhatia, G., Loh, P.-R., Georgiev, S., Mukherjee, S.,
+	Patterson, N.~J., and Price, A.~L. (2016).
+	\newblock Fast principal-component analysis reveals convergent evolution of
+	{ADH1B} in europe and east asia.
+	\newblock {\em The American Journal of Human Genetics\/}, {\bf 98}(3),
+	456--472.
+	
+	\bibitem[Gnanadesikan and Kettenring(1972)Gnanadesikan and
+	Kettenring]{gnanadesikan1972robust}
+	Gnanadesikan, R. and Kettenring, J.~R. (1972).
+	\newblock Robust estimates, residuals, and outlier detection with multiresponse
+	data.
+	\newblock {\em Biometrics\/}, pages 81--124.
+	
+	\bibitem[Hubert and Vandervieren(2008)Hubert and
+	Vandervieren]{hubert2008adjusted}
+	Hubert, M. and Vandervieren, E. (2008).
+	\newblock An adjusted boxplot for skewed distributions.
+	\newblock {\em Computational statistics \& data analysis\/}, {\bf 52}(12),
+	5186--5201.
+	
+	\bibitem[{International HapMap 3 Consortium} {\em et~al.}(2010){International
+		HapMap 3 Consortium} {\em et~al.}]{international2010integrating}
+	{International HapMap 3 Consortium} {\em et~al.} (2010).
+	\newblock Integrating common and rare genetic variation in diverse human
+	populations.
+	\newblock {\em Nature\/}, {\bf 467}(7311), 52.
+	
+	\bibitem[Kriegel {\em et~al.}(2009)Kriegel, Kr{\"o}ger, Schubert, and
+	Zimek]{kriegel2009loop}
+	Kriegel, H.-P., Kr{\"o}ger, P., Schubert, E., and Zimek, A. (2009).
+	\newblock {LoOP}: local outlier probabilities.
+	\newblock In {\em Proceedings of the 18th {ACM} conference on Information and
+		knowledge management\/}, pages 1649--1652. ACM.
+	
+	\bibitem[Lee {\em et~al.}(2010)Lee, Zou, and Wright]{lee2010convergence}
+	Lee, S., Zou, F., and Wright, F.~A. (2010).
+	\newblock Convergence and prediction of principal component scores in
+	high-dimensional settings.
+	\newblock {\em Annals of statistics\/}, {\bf 38}(6), 3605.
+	
+	\bibitem[Lehoucq and Sorensen(1996)Lehoucq and Sorensen]{Lehoucq1996}
+	Lehoucq, R.~B. and Sorensen, D.~C. (1996).
+	\newblock {Deflation Techniques for an Implicitly Restarted Arnoldi Iteration}.
+	\newblock {\em SIAM Journal on Matrix Analysis and Applications\/}, {\bf
+		17}(4), 789--821.
+	
+	\bibitem[Loh {\em et~al.}(2015a)Loh, Bhatia, Gusev, Finucane, Bulik-Sullivan,
+	Pollack, de~Candia, Lee, Wray, Kendler, {\em et~al.}]{loh2015contrasting}
+	Loh, P.-R., Bhatia, G., Gusev, A., Finucane, H.~K., Bulik-Sullivan, B.~K.,
+	Pollack, S.~J., de~Candia, T.~R., Lee, S.~H., Wray, N.~R., Kendler, K.~S.,
+	{\em et~al.} (2015a).
+	\newblock Contrasting genetic architectures of schizophrenia and other complex
+	diseases using fast variance-components analysis.
+	\newblock {\em Nature genetics\/}, {\bf 47}(12), 1385.
+	
+	\bibitem[Loh {\em et~al.}(2015b)Loh, Tucker, Bulik-Sullivan, Vilhjalmsson,
+	Finucane, Salem, Chasman, Ridker, Neale, Berger, {\em
+		et~al.}]{loh2015efficient}
+	Loh, P.-R., Tucker, G., Bulik-Sullivan, B.~K., Vilhjalmsson, B.~J., Finucane,
+	H.~K., Salem, R.~M., Chasman, D.~I., Ridker, P.~M., Neale, B.~M., Berger, B.,
+	{\em et~al.} (2015b).
+	\newblock Efficient bayesian mixed-model analysis increases association power
+	in large cohorts.
+	\newblock {\em Nature genetics\/}, {\bf 47}(3), 284.
+	
+	\bibitem[Luu {\em et~al.}(2017)Luu, Bazin, and Blum]{luu2017pcadapt}
+	Luu, K., Bazin, E., and Blum, M. G.~B. (2017).
+	\newblock pcadapt: an {R} package to perform genome scans for selection based
+	on principal component analysis.
+	\newblock {\em Molecular ecology resources\/}, {\bf 17}(1), 67--77.
+	
+	\bibitem[Manichaikul {\em et~al.}(2010)Manichaikul, Mychaleckyj, Rich, Daly,
+	Sale, and Chen]{manichaikul2010robust}
+	Manichaikul, A., Mychaleckyj, J.~C., Rich, S.~S., Daly, K., Sale, M., and Chen,
+	W.-M. (2010).
+	\newblock Robust relationship inference in genome-wide association studies.
+	\newblock {\em Bioinformatics\/}, {\bf 26}(22), 2867--2873.
+	
+	\bibitem[Maronna and Zamar(2002)Maronna and Zamar]{maronna2002robust}
+	Maronna, R.~A. and Zamar, R.~H. (2002).
+	\newblock Robust estimates of location and dispersion for high-dimensional
+	datasets.
+	\newblock {\em Technometrics\/}, {\bf 44}(4), 307--317.
+	
+	\bibitem[McVean(2009)McVean]{mcvean2009genealogical}
+	McVean, G. (2009).
+	\newblock A genealogical interpretation of principal components analysis.
+	\newblock {\em PLoS genetics\/}, {\bf 5}(10), e1000686.
+	
+	\bibitem[Meyer(2019)Meyer]{meyer2019genotype}
+	Meyer, H. (2019).
+	\newblock Processing 1000 genomes reference data for ancestry estimation.
+	
+	\bibitem[Novembre and Stephens(2008)Novembre and
+	Stephens]{novembre2008interpreting}
+	Novembre, J. and Stephens, M. (2008).
+	\newblock Interpreting principal component analyses of spatial population
+	genetic variation.
+	\newblock {\em Nature genetics\/}, {\bf 40}(5), 646.
+	
+	\bibitem[Patterson {\em et~al.}(2006)Patterson, Price, and
+	Reich]{patterson2006population}
+	Patterson, N., Price, A.~L., and Reich, D. (2006).
+	\newblock Population structure and eigenanalysis.
+	\newblock {\em PLoS genetics\/}, {\bf 2}(12), e190.
+	
+	\bibitem[Pickrell {\em et~al.}(2010)Pickrell, Marioni, Pai, Degner, Engelhardt,
+	Nkadori, Veyrieras, Stephens, Gilad, and
+	Pritchard]{pickrell2010understanding}
+	Pickrell, J.~K., Marioni, J.~C., Pai, A.~A., Degner, J.~F., Engelhardt, B.~E.,
+	Nkadori, E., Veyrieras, J.-B., Stephens, M., Gilad, Y., and Pritchard, J.~K.
+	(2010).
+	\newblock Understanding mechanisms underlying human gene expression variation
+	with rna sequencing.
+	\newblock {\em Nature\/}, {\bf 464}(7289), 768.
+	
+	\bibitem[Price {\em et~al.}(2006)Price, Patterson, Plenge, Weinblatt, Shadick,
+	and Reich]{price2006principal}
+	Price, A.~L., Patterson, N.~J., Plenge, R.~M., Weinblatt, M.~E., Shadick,
+	N.~A., and Reich, D. (2006).
+	\newblock Principal components analysis corrects for stratification in
+	genome-wide association studies.
+	\newblock {\em Nature genetics\/}, {\bf 38}(8), 904.
+	
+	\bibitem[Price {\em et~al.}(2008)Price, Weale, Patterson, Myers, Need, Shianna,
+	Ge, Rotter, Torres, Taylor, {\em et~al.}]{price2008long}
+	Price, A.~L., Weale, M.~E., Patterson, N., Myers, S.~R., Need, A.~C., Shianna,
+	K.~V., Ge, D., Rotter, J.~I., Torres, E., Taylor, K.~D., {\em et~al.} (2008).
+	\newblock Long-range {LD} can confound genome scans in admixed populations.
+	\newblock {\em The American Journal of Human Genetics\/}, {\bf 83}(1),
+	132--135.
+	
+	\bibitem[Price {\em et~al.}(2010)Price, Zaitlen, Reich, and
+	Patterson]{price2010new}
+	Price, A.~L., Zaitlen, N.~A., Reich, D., and Patterson, N. (2010).
+	\newblock New approaches to population stratification in genome-wide
+	association studies.
+	\newblock {\em Nature Reviews Genetics\/}, {\bf 11}(7), 459.
+	
+	\bibitem[Priv{\'e} {\em et~al.}(2018)Priv{\'e}, Aschard, Ziyatdinov, and
+	Blum]{prive2017efficient}
+	Priv{\'e}, F., Aschard, H., Ziyatdinov, A., and Blum, M. G.~B. (2018).
+	\newblock Efficient analysis of large-scale genome-wide data with two {R}
+	packages: bigstatsr and bigsnpr.
+	\newblock {\em Bioinformatics\/}, {\bf 34}(16), 2781--2787.
+	
+	\bibitem[Priv{\'e} {\em et~al.}(2019)Priv{\'e}, Aschard, and
+	Blum]{prive2019efficient}
+	Priv{\'e}, F., Aschard, H., and Blum, M. G.~B. (2019).
+	\newblock Efficient implementation of penalized regression for genetic risk
+	prediction.
+	\newblock {\em Genetics\/}, {\bf 212}(1), 65--74.
+	
+	\bibitem[Priv{\'e} {\em et~al.}(2020)Priv{\'e}, Luu, Vilhj{\'a}lmsson, and
+	Blum]{prive2020performing}
+	Priv{\'e}, F., Luu, K., Vilhj{\'a}lmsson, B.~J., and Blum, M. G.~B. (2020).
+	\newblock Performing highly efficient genome scans for local adaptation with
+	{R} package pcadapt version 4.
+	\newblock {\em Molecular Biology and Evolution\/}.
+	
+	\bibitem[Tukey(1977)Tukey]{tukey77}
+	Tukey, J.~W. (1977).
+	\newblock {\em Exploratory Data Analysis\/}.
+	\newblock Addison-Wesley.
+	
+	\bibitem[Wang {\em et~al.}(2015)Wang, Zhan, Liang, Abecasis, and
+	Lin]{wang2015improved}
+	Wang, C., Zhan, X., Liang, L., Abecasis, G.~R., and Lin, X. (2015).
+	\newblock Improved ancestry estimation for both genotyping and sequencing data
+	using projection procrustes analysis and genotype imputation.
+	\newblock {\em The American Journal of Human Genetics\/}, {\bf 96}(6),
+	926--937.
+	
+	\bibitem[Wu {\em et~al.}(2017)Wu, Romero, and Stathopoulos]{wu2017primme}
+	Wu, L., Romero, E., and Stathopoulos, A. (2017).
+	\newblock Primme\_svds: A high-performance preconditioned svd solver for
+	accurate large-scale computations.
+	\newblock {\em {SIAM} Journal on Scientific Computing\/}, {\bf 39}(5),
+	S248--S271.
+	
+	\bibitem[Yang {\em et~al.}(2010)Yang, Benyamin, McEvoy, Gordon, Henders,
+	Nyholt, Madden, Heath, Martin, Montgomery, {\em et~al.}]{yang2010common}
+	Yang, J., Benyamin, B., McEvoy, B.~P., Gordon, S., Henders, A.~K., Nyholt,
+	D.~R., Madden, P.~A., Heath, A.~C., Martin, N.~G., Montgomery, G.~W., {\em
+		et~al.} (2010).
+	\newblock Common snps explain a large proportion of the heritability for human
+	height.
+	\newblock {\em Nature genetics\/}, {\bf 42}(7), 565.
+	
+	\bibitem[Yohai and Zamar(1988)Yohai and Zamar]{yohai1988high}
+	Yohai, V.~J. and Zamar, R.~H. (1988).
+	\newblock High breakdown-point estimates of regression by means of the
+	minimization of an efficient scale.
+	\newblock {\em Journal of the American statistical association\/}, {\bf
+		83}(402), 406--413.
+	
+	\bibitem[Zhang {\em et~al.}(2020)Zhang, Dey, and Lee]{zhang2019fast}
+	Zhang, D., Dey, R., and Lee, S. (2020).
+	\newblock {Fast and robust ancestry prediction using principal component
+		analysis}.
+	\newblock {\em Bioinformatics\/}.
+	\newblock btaa152.
+	
+	\bibitem[Zou {\em et~al.}(2010)Zou, Lee, Knowles, and
+	Wright]{zou2010quantification}
+	Zou, F., Lee, S., Knowles, M.~R., and Wright, F.~A. (2010).
+	\newblock Quantification of population structure using correlated snps by
+	shrinkage principal components.
+	\newblock {\em Human heredity\/}, {\bf 70}(1), 9--22.
+	
+\end{thebibliography}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
