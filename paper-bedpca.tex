@@ -99,11 +99,13 @@ Overall, we believe this work would be of interest for anyone using PCA in their
 
 \section{Introduction}
 
-Principal Component Analysis (PCA) has been widely used in genetics for many years and in many contexts. For instance, adding PCs as covariates is routinely used to adjust for population structure in Genome-Wide Association Studies (GWAS) \cite[]{price2006principal,novembre2008interpreting}. PCA has also been used to detect loci under selection \cite[]{galinsky2016fast,luu2017pcadapt} and in heritability analyses \cite[]{yang2010common,loh2015contrasting}.
+Principal Component Analysis (PCA) has been widely used in genetics for many years and in many contexts. For instance, adding PCs as covariates is routinely used to adjust for population structure in Genome-Wide Association Studies (GWAS) \cite[]{price2006principal,novembre2008interpreting}. PCA has also been used to detect loci under selection \cite[]{galinsky2016fast,luu2017pcadapt,prive2020performing} and in heritability analyses \cite[]{yang2010common,loh2015contrasting}.
 Recently, the advent of large population-scale genetic datasets, such as the UK biobank data, has prompted research on developing scalable algorithms to compute PCA on very large data \cite[]{bycroft2017genome}.
 It is now possible to efficiently approximate PCA on very large datasets thanks to software such as FastPCA (fast mode of EIGENSOFT), FlashPCA2, PLINK 2.0 (approx mode), bigstatsr/bigsnpr, TeraPCA and ProPCA \cite[]{galinsky2016fast,abraham2017flashpca2,chang2015second,prive2017efficient,bose2019terapca,agrawal2019scalable}.
 
-However, in practice, conducting PCA on genotype data to capture population structure consists of more steps than simply performing singular value decomposition on the genotype matrix. These steps includes removing related individuals, pruning variants in LD, and excluding outlier samples that can suggest poor genotyping quality or distant relatedness. Indeed, many pitfalls related to PCA of genotype data have been documented and none of the currently available software address all of these. 
+However, in practice, conducting PCA on genotype data to capture population structure consists of more steps than simply performing singular value decomposition on the genotype matrix. These steps include removing related individuals, pruning variants in LD, and excluding outlier samples that can suggest poor genotyping quality or distant relatedness. 
+Some genetic analyses may also require to restrict to individuals of homogeneous ancestry.
+Many pitfalls related to PCA of genotype data have been documented and none of the currently available software address all of these. 
 In the following, we outline these pitfalls and explain when they are relevant.
 First, some of the PCs may capture LD structure rather than population structure \cite[]{price2008long,zou2010quantification,abdellaoui2013population,prive2017efficient}.
 Including PCs that capture LD as covariates in genetic analyses can lead to reduced power for detecting genetic associations within these LD regions \cite[]{zou2010quantification}.  
@@ -167,11 +169,12 @@ We use these distances for many applications in this paper.
 When $x$ is multivariate Gaussian data with $K$ dimensions, the squared distances follow a $\chi^2(K)$ distribution.
 If $x$ represents PC scores of centered data and if we use standard estimates, then $\mu = 0$ and $\Sigma = I_K$.
 Yet, here we use the pairwise orthogonalised Gnanadesikan-Kettenrin robust estimates of these parameters \cite[]{gnanadesikan1972robust,yohai1988high,maronna2002robust}.
-We implement the estimation of these robust parameters in function \texttt{covrob\_ogk} of R package bigutilsr. 
+We implement the estimation of these robust parameters in function \texttt{covrob\_ogk} of R package bigutilsr, and the direct computation of these robust distances in function \texttt{dist\_ogk}. 
 
 \subsection{Detecting LD structure in PCA}
 
 For detecting outlier variants in PCA that are due to long-range Linkage Disequilibrium (LD) regions, we use a similar procedure as described by \cite{prive2017efficient}.
+Note that this procedure does not require removing any known long-range LD region a priori.
 We first apply a first round of clumping at e.g.\ $r^2$ > 0.2, prioritising variants by higher minor allele count.
 Then, we compute $K$ PC scores and loadings (Section \ref{randomSVD}).
 To summarise the contribution of each variant in all $K$ PC loadings, we compute the robust Mahalanobis distances of these PC loadings (Section \ref{maha}).  
@@ -200,7 +203,7 @@ As for detecting samples that have a different ancestry from most of the samples
 
 To project a target genotype dataset to the PCA space from a reference dataset (e.g.\ the 1000 genomes data), we implement the following 3 steps in function \texttt{bed\_projectPCA} of package bigsnpr: 1) matching the variants of each dataset, including removing ambiguous alleles [A/T] and [C/G], and matching strand and direction of the alleles; 2) computing PCA of the reference dataset using the matched variants only; 3) projecting computed PCs to the target data using an optimised implementation (see Supplementary Materials) of the Online Augmentation, Decomposition, and Procrustes (OADP) transformation \cite[]{zhang2019fast}.
 To project individuals from the same dataset as the individuals used for computing PCA, we provide function \texttt{bed\_projectSelfPCA}. 
-Note that the new individuals to be projected should not be related to the ones used for computing PCA (Section \ref{proj-related}).
+Note that the new individuals to be projected should not be related to the ones used for computing PCA (cf.\ section \ref{proj-related}).
 
 \subsection{Data\label{1000G}}
 
@@ -227,7 +230,7 @@ To demonstrate that we provide very fast implementations of the different method
 It takes 22 minutes to perform a first phase of clumping on 406,545 unrelated individuals genotyped over 504,139 variants, which reduces the number of variants to 261,307. It then takes 34 minutes to compute the first 20 PCs using these 261,307 variants.
 When performing the automatic procedure for LD detection, it takes 5 hours to perform the initial clumping step, 6 rounds of computation of PCs and 5 rounds of outlier variant detection (i.e.\ 5 iterations of outlier detection and one final computation of PCs).
 
-When applying our automatic procedure to remove long-range LD regions, it does not converge after 5 iterations for the UK Biobank, meaning that it keeps detecting long-range LD regions at each iteration (represented by peaks in PC loadings).
+When applying our automatic procedure to remove long-range LD regions, it does not converge after 5 iterations for the UK Biobank, i.e.\ it keeps detecting long-range LD regions at each iteration (represented by peaks in PC loadings).
 Therefore, we are able to capture only 16 PCs that show stratification that is not LD structure (Figures \ref{fig:UKBB-screeplot}, \ref{fig:UKBB-scores} and \ref{fig:UKBB-loadings}).
 Similarly, PC loadings reported by the UK Biobank clearly show that PC19 to PC40 capture LD structure, which is also the case for PC16 and PC18, although less pronounced (see peaks in figure \ref{fig:UKBB-loadings40}). 
 These include e.g.\ one region on chromosome 6 (70-91 Mbp) that is captured in PC19 (Figure \ref{fig:UKBB-loadings}) and that was not previously reported in \cite{price2008long}.
@@ -240,7 +243,7 @@ Points are hex-binned.
 \label{fig:UKBB-loadings40}}
 \end{figure}
 
-As for other analyses, it takes 8 minutes to match the 1000G data to the UKBB data and compute 20 PCs of the 1000G data using the automatic LD detection technique. It takes 12 minutes more to do the OADP projection of all 488,371 individuals of the UKBB data onto the PCA computed using the 1000G data.
+As for other analyses, it takes 8 minutes to match the 1000G data to the UKBB data and compute 20 PCs of the 1000G data using the automatic LD detection technique. It takes 12 minutes more to perform the OADP projection of all 488,371 UKBB individuals onto the PCA space computed using the 1000G data.
 Finally, it takes only 6 minutes to compute the 30-Nearest Neighbours of 20 PC scores for 406,545 UK Biobank individuals, which is the most computationally demanding step when computing the statistics used to detect individual outlier samples (Section \ref{outlier-sample}).
 
 \subsection{Outlier sample detection}
@@ -372,6 +375,7 @@ We expect population structure to be evenly distributed along the genome so that
 In contrast, long-range LD structure is essentially capturing the variation inside one long-range LD region (so localised in the genome), so that we expect the loadings to be very large in that region only (one peak).
 Therefore, PCs capturing LD structure can be identified by looking for peaks in PC loadings (e.g.\ PC17-20 in figure \ref{fig:UKBB-loadings}). 
 To identify which PCs capture population structure, and which ones are probably just noise, one should also look at PC scores (colored by ancestry if possible).
+PCs with no visible population stratification, i.e.\ where all individuals are normally distributed around 0, can be considered as noise.   
 As in many applications, we believe a compromise between signal and noise should be preferred. Therefore, we recommend using only PCs that show structure (e.g.\ PC1-16 in figure \ref{fig:UKBB-scores}) and excluding PCs that do not seem to capture any population structure (e.g.\ PC17-20 in figure \ref{fig:UKBB-scores}).
 
 When analysing a dataset that is composed mainly of one population (e.g.\ British people in the UK Biobank), we found that it is useful to subset these individuals to reduce the imbalance between the different population sizes.
