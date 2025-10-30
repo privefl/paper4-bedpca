@@ -93,7 +93,7 @@ system.time(
 #### Reported by the UK Biobank ####
 
 snp_qc <- bigreadr::fread2("https://biobank.ctsu.ox.ac.uk/crystal/crystal/auxdata/ukb_snp_qc.txt")
-str(loadings <- snp_qc[grep("_loading$", names(snp_qc))])
+str(loadings <- snp_qc[grep("_loading", names(snp_qc))])
 
 plot_grid(plotlist = lapply(1:40, function(i) {
   l_i <- loadings[[i]]
@@ -108,7 +108,7 @@ plot_grid(plotlist = lapply(1:40, function(i) {
 # ggsave("figures/UKBB-loadings1-40.pdf", width = 15, height = 15)
 
 # Long-range LD region of PC19
-load_PC19 <- loadings$PC9_loading.1
+load_PC19 <- loadings$PC9_loading.1  # PC9_loading.1 is PC19 for some reason (PC9_loading.2 is PC29 & PC9_loading.3 is PC39)
 ind_large <- which(abs(load_PC19) > 0.01)
 plot(ind_large, load_PC19[ind_large], pch = 20)
 snp_qc[ind_large, c("chromosome", "position")] # chr6 - [70-91]
